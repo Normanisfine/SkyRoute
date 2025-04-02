@@ -1,19 +1,19 @@
 -- User related
 -- Get user details by user_id / email
-SELECT * FROM User WHERE user_id = 123;
-SELECT * FROM User WHERE email = 'user@example.com';
+SELECT * FROM User WHERE user_id = 1;
+SELECT * FROM User WHERE email = 'johndoe@example.com';
 
 -- List All Passengers' names for a Specific User
 SELECT p.name
 FROM Passenger p
 JOIN User u ON p.user_id = u.user_id
-WHERE u.user_id = 123; 
+WHERE u.user_id = 1; 
 
 -- List a passenger's all info for a specific passenger
 SELECT p.*
 FROM Passenger p
 LEFT JOIN User u ON p.user_id = u.user_id
-WHERE p.passenger_id = 456 AND u.user_id = 123;
+WHERE p.passenger_id = 1 AND u.user_id = 1;
 
 -- Flight related
 -- Get flight details (when searching)
@@ -39,44 +39,44 @@ JOIN
 WHERE 
     dep_airport.city = 'New York' -- Replace with the "from" city
     AND arr_airport.city = 'Los Angeles' -- Replace with the "to" city
-    AND f.departure_time BETWEEN '2025-04-01 00:00:00' AND '2025-04-01 23:59:59' -- Replace with departure date
-    AND f.arrival_time BETWEEN '2025-04-02 00:00:00' AND '2025-04-02 23:59:59'; -- Replace with return date
+    AND f.departure_time BETWEEN '2020-04-01 00:00:00' AND '2025-04-01 23:59:59' -- Replace with departure date
+    AND f.arrival_time BETWEEN '2020-04-02 00:00:00' AND '2025-04-02 23:59:59'; -- Replace with return date
 
 --  Get Available Seats for a Flight
 SELECT s.seat_id, s.seat_number, s.class_type, s.price
 FROM Seat s
 JOIN Aircraft a ON s.aircraft_id = a.aircraft_id
 JOIN Flight f ON f.aircraft_id = a.aircraft_id
-WHERE f.flight_id = 123 -- Replace with the specific flight_id
+WHERE f.flight_id = 1 -- Replace with the specific flight_id
   AND s.seat_id NOT IN (
       SELECT b.seat_id
       FROM Booking b
-      WHERE b.flight_id = 123 -- Replace with the same flight_id
+      WHERE b.flight_id = 1 -- Replace with the same flight_id
   );
 
---Get Crew Information for a Flight 
+-- Get Crew Information for a Flight 
 SELECT c.crew_id, c.name, c.role
 FROM Crew c
-WHERE c.flight_id = 123;
+WHERE c.flight_id = 1;
 
---Get Airline Information for a Flight
+-- Get Airline Information for a Flight
 SELECT al.airline_id, al.airline_name, al.country
 FROM Flight f
 JOIN Airline al ON f.airline_id = al.airline_id
-WHERE f.flight_id = 123;
+WHERE f.flight_id = 1;
 
---Get Aircraft Information for a Flight
+-- Get Aircraft Information for a Flight
 SELECT a.aircraft_id, a.model, a.total_seats
 FROM Flight f
 JOIN Aircraft a ON f.aircraft_id = a.aircraft_id
-WHERE f.flight_id = 123;
+WHERE f.flight_id = 1;
 
---Get Airport Information for a Flight
+-- Get Airport Information for a Flight
 SELECT dep.airport_name AS departure_airport, arr.airport_name AS arrival_airport
 FROM Flight f
 JOIN Airport dep ON f.departure_airport_id = dep.airport_id
 JOIN Airport arr ON f.arrival_airport_id = arr.airport_id
-WHERE f.flight_id = 123;
+WHERE f.flight_id = 1;
 
 -- Booking related
 -- Get Booking Details for a Specific User (payment included)
@@ -105,20 +105,21 @@ JOIN
 JOIN 
     Seat s ON b.seat_id = s.seat_id
 WHERE 
-    b.user_id = 123; 
+    b.user_id = 1; 
 
 -- Get info for deleting a booking
-SELECT seat_id, payment_id FROM Booking WHERE booking_id = 123; -- these will be stored in the backend
+SELECT seat_id FROM Booking WHERE booking_id = 1; -- these will be stored in the backend
+SELECT payment_id FROM Payment WHERE booking_id = 1; -- these will be stored in the backend
 
---Get Check-in Information for a Booking
+-- Get Check-in Information for a Booking
 SELECT c.checkin_id, c.seat_id, c.checkin_time
 FROM Check_in c
-WHERE c.booking_id = 123;
+WHERE c.booking_id = 1;
 
---Get Luggage Information for a Booking
+-- Get Luggage Information for a Booking
 SELECT l.luggage_id, l.weight, l.dimensions
 FROM Luggage l
-WHERE l.booking_id = 123;
+WHERE l.booking_id = 1;
 
 -- Get Boarding Pass for a Booking
 SELECT 
@@ -137,4 +138,4 @@ JOIN
 JOIN 
     Flight f ON bp.flight_id = f.flight_id
 WHERE 
-    bp.passenger_id = (SELECT passenger_id FROM Booking WHERE booking_id = 123);
+    bp.passenger_id = (SELECT passenger_id FROM Booking WHERE booking_id = 1);

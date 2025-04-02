@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Apr 02, 2025 at 02:24 AM
+-- Generation Time: Apr 03, 2025 at 12:37 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -40,7 +40,7 @@ CREATE TABLE `Aircraft` (
 
 INSERT INTO `Aircraft` (`aircraft_id`, `model`, `total_seats`, `airline_id`) VALUES
 (1, 'Boeing 737', 5, 1),
-(2, 'Airbus A320', 5, 2),
+(2, 'Boeing 747', 400, 5),
 (3, 'Boeing 777', 5, 3),
 (4, 'Airbus A380', 5, 4),
 (5, 'Boeing 787 Dreamliner', 5, 5),
@@ -69,7 +69,7 @@ CREATE TABLE `Airline` (
 INSERT INTO `Airline` (`airline_id`, `airline_name`, `country`) VALUES
 (1, 'American Airlines', 'USA'),
 (2, 'Delta Air Lines', 'USA'),
-(3, 'United Airlines', 'USA'),
+(3, 'Delta Airlines', 'USA'),
 (4, 'Southwest Airlines', 'USA'),
 (5, 'Air France', 'France'),
 (6, 'Lufthansa', 'Germany'),
@@ -100,7 +100,7 @@ CREATE TABLE `Airport` (
 INSERT INTO `Airport` (`airport_id`, `airport_name`, `city`, `country`, `iata_code`, `icao_code`) VALUES
 (1, 'JFK International Airport', 'New York', 'USA', 'JFK', 'KJFK'),
 (2, 'Los Angeles International Airport', 'Los Angeles', 'USA', 'LAX', 'KLAX'),
-(3, 'Heathrow Airport', 'London', 'UK', 'LHR', 'EGLL'),
+(3, 'JFK International', 'New York', 'USA', 'LHR', 'EGLL'),
 (4, 'Charles de Gaulle Airport', 'Paris', 'France', 'CDG', 'LFPG'),
 (5, 'Frankfurt Airport', 'Frankfurt', 'Germany', 'FRA', 'EDDF'),
 (6, 'Narita International Airport', 'Tokyo', 'Japan', 'NRT', 'RJAA'),
@@ -160,14 +160,15 @@ CREATE TABLE `Boarding_Pass` (
 INSERT INTO `Boarding_Pass` (`boarding_pass_id`, `passenger_id`, `flight_id`, `seat_number`, `boarding_gate`, `boarding_time`) VALUES
 (1, 1, 1, 'A1', 'Gate 1', '2023-03-01 07:30:00'),
 (2, 2, 2, 'A1', 'Gate 2', '2023-03-02 08:30:00'),
-(3, 3, 3, 'A1', 'Gate 3', '2023-03-03 09:30:00'),
+(3, 3, 3, '14B', 'G7', '2025-04-02 18:36:27'),
 (4, 4, 4, 'A1', 'Gate 4', '2023-03-04 10:30:00'),
 (5, 5, 5, 'A1', 'Gate 5', '2023-03-05 11:30:00'),
 (6, 6, 6, 'A1', 'Gate 6', '2023-03-06 12:30:00'),
 (7, 7, 7, 'A1', 'Gate 7', '2023-03-07 13:30:00'),
 (8, 8, 8, 'A1', 'Gate 8', '2023-03-08 14:30:00'),
 (9, 9, 9, 'A1', 'Gate 9', '2023-03-09 15:30:00'),
-(10, 10, 10, 'A1', 'Gate 10', '2023-03-10 16:30:00');
+(10, 10, 10, 'A1', 'Gate 10', '2023-03-10 16:30:00'),
+(11, 1, 2, '12A', 'G5', NULL);
 
 -- --------------------------------------------------------
 
@@ -190,16 +191,18 @@ CREATE TABLE `Booking` (
 --
 
 INSERT INTO `Booking` (`booking_id`, `user_id`, `passenger_id`, `flight_id`, `seat_id`, `booking_time`, `status`) VALUES
-(1, 1, NULL, 1, 1, '2023-03-01 08:00:00', 'Paid'),
-(2, 2, NULL, 2, 2, '2023-03-02 09:00:00', 'Paid'),
-(3, 3, NULL, 3, 3, '2023-03-03 10:00:00', 'Paid'),
-(4, 4, NULL, 4, 4, '2023-03-04 11:00:00', 'Paid'),
-(5, 5, NULL, 5, 5, '2023-03-05 12:00:00', 'Paid'),
+(1, 1, 1, 2, 3, '2025-04-02 18:36:27', 'Paid'),
+(2, 2, 3, 2, 2, '2023-03-02 09:00:00', 'Paid'),
+(3, 3, 5, 3, 3, '2023-03-03 10:00:00', 'Paid'),
+(4, 4, 7, 4, 4, '2023-03-04 11:00:00', 'Paid'),
+(5, 5, 9, 5, 5, '2023-03-05 12:00:00', 'Paid'),
 (6, 6, NULL, 6, 6, '2023-03-06 13:00:00', 'Paid'),
 (7, 7, NULL, 7, 7, '2023-03-07 14:00:00', 'Paid'),
 (8, 8, NULL, 8, 8, '2023-03-08 15:00:00', 'Paid'),
 (9, 9, NULL, 9, 9, '2023-03-09 16:00:00', 'Paid'),
-(10, 10, NULL, 10, 10, '2023-03-10 17:00:00', 'Paid');
+(10, 10, NULL, 10, 10, '2023-03-10 17:00:00', 'Paid'),
+(278, 1, 2, 3, 4, '2025-04-02 18:34:12', 'Paid'),
+(279, 1, 2, 3, 4, '2025-04-02 18:34:38', 'Paid');
 
 -- --------------------------------------------------------
 
@@ -228,7 +231,8 @@ INSERT INTO `Check_in` (`checkin_id`, `booking_id`, `seat_id`, `checkin_time`) V
 (17, 7, 7, '2023-03-07 12:00:00'),
 (18, 8, 8, '2023-03-08 13:00:00'),
 (19, 9, 9, '2023-03-09 14:00:00'),
-(20, 10, 10, '2023-03-10 15:00:00');
+(20, 10, 10, '2023-03-10 15:00:00'),
+(22, 1, 2, NULL);
 
 -- --------------------------------------------------------
 
@@ -250,7 +254,7 @@ CREATE TABLE `Crew` (
 INSERT INTO `Crew` (`crew_id`, `flight_id`, `name`, `role`) VALUES
 (1, 1, 'Captain Morgan', 'Pilot'),
 (2, 2, 'First Officer Smith', 'Co-Pilot'),
-(3, 3, 'Captain Lee', 'Pilot'),
+(3, 3, 'John Smith', 'Pilot'),
 (4, 4, 'First Officer Clark', 'Co-Pilot'),
 (5, 5, 'Captain Wright', 'Pilot'),
 (6, 6, 'First Officer Taylor', 'Co-Pilot'),
@@ -282,7 +286,7 @@ CREATE TABLE `Flight` (
 
 INSERT INTO `Flight` (`flight_id`, `flight_number`, `departure_airport_id`, `arrival_airport_id`, `departure_time`, `arrival_time`, `aircraft_id`, `airline_id`) VALUES
 (1, 'FL100', 1, 2, '2021-01-01 08:00:00', '2021-01-01 11:00:00', 1, 1),
-(2, 'FL101', 2, 3, '2021-01-02 09:00:00', '2021-01-02 14:00:00', 2, 2),
+(2, 'AA102', 3, 4, '2025-04-02 09:00:00', '2025-04-02 13:00:00', 5, 6),
 (3, 'FL102', 3, 4, '2021-01-03 07:00:00', '2021-01-03 10:00:00', 3, 3),
 (4, 'FL103', 4, 5, '2021-01-04 10:00:00', '2021-01-04 15:00:00', 4, 4),
 (5, 'FL104', 5, 6, '2021-01-05 06:00:00', '2021-01-05 09:00:00', 5, 5),
@@ -290,7 +294,8 @@ INSERT INTO `Flight` (`flight_id`, `flight_number`, `departure_airport_id`, `arr
 (7, 'FL106', 7, 8, '2021-01-07 13:00:00', '2021-01-07 16:00:00', 7, 7),
 (8, 'FL107', 8, 9, '2021-01-08 14:00:00', '2021-01-08 19:00:00', 8, 8),
 (9, 'FL108', 9, 10, '2021-01-09 15:00:00', '2021-01-09 18:00:00', 9, 9),
-(10, 'FL109', 10, 1, '2021-01-10 16:00:00', '2021-01-10 21:00:00', 10, 10);
+(10, 'FL109', 10, 1, '2021-01-10 16:00:00', '2021-01-10 21:00:00', 10, 10),
+(11, 'AA101', 1, 2, '2025-04-01 08:00:00', '2025-04-01 12:00:00', 3, 4);
 
 -- --------------------------------------------------------
 
@@ -341,14 +346,16 @@ CREATE TABLE `Luggage` (
 INSERT INTO `Luggage` (`luggage_id`, `booking_id`, `weight`, `dimensions`) VALUES
 (1, 1, 23.00, '22x14x9'),
 (2, 2, 15.00, '20x10x8'),
-(3, 3, 30.00, '24x15x10'),
+(3, 3, 25.00, '60x45x25'),
 (4, 4, 20.00, '22x14x9'),
 (5, 5, 25.00, '22x14x9'),
 (6, 6, 18.00, '20x10x8'),
 (7, 7, 17.00, '20x10x8'),
 (8, 8, 22.00, '22x14x9'),
 (9, 9, 16.00, '20x10x8'),
-(10, 10, 28.00, '24x15x10');
+(10, 10, 28.00, '24x15x10'),
+(11, 1, 23.50, '55x40x20'),
+(12, 1, 23.50, '55x40x20');
 
 -- --------------------------------------------------------
 
@@ -371,14 +378,15 @@ CREATE TABLE `Passenger` (
 INSERT INTO `Passenger` (`passenger_id`, `user_id`, `name`, `passport_number`, `dob`) VALUES
 (1, 1, 'John Doe Jr.', 'B1234567', '2000-01-01'),
 (2, 1, 'Emily Doe', 'B1234568', '2002-02-02'),
-(3, 2, 'Michael Smith', 'B1234569', '2001-03-03'),
+(3, 2, 'Updated Name', 'B1234569', '2001-03-03'),
 (4, 2, 'Rachel Smith', 'B1234570', '2003-04-04'),
-(5, 3, 'Laura Johnson', 'B1234571', '2005-05-05'),
-(6, 3, 'Kevin Johnson', 'B1234572', '2006-06-06'),
+(5, 3, 'Laura Johnson', 'UpdatedPass123', '2005-05-05'),
+(6, 3, 'Kevin Johnson', 'B1234572', '1990-01-01'),
 (7, 4, 'Sarah Brown', 'B1234573', '2007-07-07'),
 (8, 5, 'Zoe Davis', 'B1234574', '2008-08-08'),
 (9, 6, 'Oliver Miller', 'B1234575', '2009-09-09'),
-(10, 7, 'Isabella White', 'B1234576', '2010-10-10');
+(10, 7, 'Isabella White', 'B1234576', '2010-10-10'),
+(11, 1, 'Sara Smith', 'P12345678', '1980-04-01');
 
 -- --------------------------------------------------------
 
@@ -407,7 +415,9 @@ INSERT INTO `Payment` (`payment_id`, `booking_id`, `payment_method`, `payment_st
 (17, 7, 'PayPal', 'Completed'),
 (18, 8, 'Credit Card', 'Completed'),
 (19, 9, 'Alipay', 'Completed'),
-(20, 10, 'Credit Card', 'Completed');
+(20, 10, 'Credit Card', 'Completed'),
+(21, 1, 'Credit Card', 'Completed'),
+(22, 1, 'Credit Card', 'Completed');
 
 -- --------------------------------------------------------
 
@@ -458,7 +468,7 @@ CREATE TABLE `Seat` (
 --
 
 INSERT INTO `Seat` (`seat_id`, `aircraft_id`, `seat_number`, `class_type`, `price`, `status`) VALUES
-(1, 1, 'A1', 'Economy', 200.00, 'Available'),
+(1, 1, 'A1', 'Economy', 200.00, 'Booked'),
 (2, 1, 'A2', 'Economy', 200.00, 'Available'),
 (3, 1, 'A3', 'Economy', 200.00, 'Available'),
 (4, 1, 'A4', 'Economy', 200.00, 'Available'),
@@ -491,13 +501,14 @@ INSERT INTO `User` (`user_id`, `name`, `email`, `phone`, `passport_number`) VALU
 (1, 'John Doe', 'johndoe@example.com', '555-0100', 'A1234567'),
 (2, 'Jane Smith', 'janesmith@example.com', '555-0101', 'A1234568'),
 (3, 'Alice Johnson', 'alicejohnson@example.com', '555-0102', 'A1234569'),
-(4, 'Bob Brown', 'bobbrown@example.com', '555-0103', 'A1234570'),
-(5, 'Charlie Davis', 'charliedavis@example.com', '555-0104', 'A1234571'),
+(4, 'Bob Brown', 'bobbrown@example.com', '+1-555-987-6543', 'A1234570'),
+(5, 'Charlie Davis', 'charliedavis@example.com', '555-0104', 'P9876543'),
 (6, 'Daisy Miller', 'daisymiller@example.com', '555-0105', 'A1234572'),
-(7, 'Ella White', 'ellawhite@example.com', '555-0106', 'A1234573'),
-(8, 'Frank Green', 'frankgreen@example.com', '555-0107', 'A1234574'),
+(7, 'Ella White', 'newemail@example.com', '555-0106', 'A1234573'),
+(8, 'New Name', 'frankgreen@example.com', '555-0107', 'A1234574'),
 (9, 'Grace Hall', 'gracehall@example.com', '555-0108', 'A1234575'),
-(10, 'Harry Lee', 'harrylee@example.com', '555-0109', 'A1234576');
+(10, 'Harry Lee', 'harrylee@example.com', '555-0109', 'A1234576'),
+(11, 'John Doe2', 'john.doe@example2.com', '555-1234', 'A12345678');
 
 --
 -- Indexes for dumped tables
@@ -660,19 +671,19 @@ ALTER TABLE `Baggage_Claim`
 -- AUTO_INCREMENT for table `Boarding_Pass`
 --
 ALTER TABLE `Boarding_Pass`
-  MODIFY `boarding_pass_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `boarding_pass_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `Booking`
 --
 ALTER TABLE `Booking`
-  MODIFY `booking_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=278;
+  MODIFY `booking_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=280;
 
 --
 -- AUTO_INCREMENT for table `Check_in`
 --
 ALTER TABLE `Check_in`
-  MODIFY `checkin_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `checkin_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `Crew`
@@ -684,7 +695,7 @@ ALTER TABLE `Crew`
 -- AUTO_INCREMENT for table `Flight`
 --
 ALTER TABLE `Flight`
-  MODIFY `flight_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `flight_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `Flight_Status`
@@ -696,19 +707,19 @@ ALTER TABLE `Flight_Status`
 -- AUTO_INCREMENT for table `Luggage`
 --
 ALTER TABLE `Luggage`
-  MODIFY `luggage_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `luggage_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `Passenger`
 --
 ALTER TABLE `Passenger`
-  MODIFY `passenger_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `passenger_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `Payment`
 --
 ALTER TABLE `Payment`
-  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `Saved_Flights`
@@ -726,7 +737,7 @@ ALTER TABLE `Seat`
 -- AUTO_INCREMENT for table `User`
 --
 ALTER TABLE `User`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- Constraints for dumped tables
