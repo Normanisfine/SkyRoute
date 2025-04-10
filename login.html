@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skywalker Travel - Login & Register</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --secondary-color: #5f6368;
+            --accent-color: #ff5722;
+            --light-gray: #f8f9fa;
+            --medium-gray: #e0e0e0;
+            --dark-gray: #5f6368;
+            --success-color: #34a853;
+            --warning-color: #fbbc04;
+            --danger-color: #ea4335;
+            --font-main: 'Segoe UI', Arial, sans-serif;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: #333;
+            background-color: #f5f7fa;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: white;
+            box-shadow: var(--box-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo i {
+            margin-right: 10px;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 25px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: var(--secondary-color);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover,
+        nav ul li a.active {
+            color: var(--primary-color);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 50px 0;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            box-shadow: var(--box-shadow);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            min-height: 600px;
+        }
+
+        .auth-image {
+            flex: 1;
+            background-image: url('https://images.unsplash.com/photo-1530521954074-e64f6810b32d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px;
+            color: white;
+        }
+
+        .auth-image-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .auth-image-description {
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .auth-image-features {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .auth-image-features li {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .auth-image-features li i {
+            margin-right: 10px;
+            color: var(--accent-color);
+        }
+
+        .auth-form-container {
+            flex: 1;
+            background-color: white;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .auth-tab {
+            padding: 15px 20px;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            color: var(--secondary-color);
+        }
+
+        .auth-tab.active {
+            color: var(--primary-color);
+        }
+
+        .auth-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+
+        .auth-form-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark-gray);
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            font-family: var(--font-main);
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2);
+        }
+
+        .password-input-container {
+            position: relative;
+        }
+
+        .password-toggle-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary-color);
+            cursor: pointer;
+        }
+
+        .password-strength {
+            height: 5px;
+            background-color: var(--medium-gray);
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .password-strength-meter {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s, background-color 0.3s;
+        }
+
+        .weak {
+            width: 33%;
+            background-color: var(--danger-color);
+        }
+
+        .medium {
+            width: 66%;
+            background-color: var(--warning-color);
+        }
+
+        .strong {
+            width: 100%;
+            background-color: var(--success-color);
+        }
+
+        .form-actions {
+            margin-top: 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1559b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--medium-gray);
+            color: var(--secondary-color);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .forgot-password {
+            display: block;
+            text-align: right;
+            margin: 15px 0 25px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+
+        .separator {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 30px 0;
+            color: var(--secondary-color);
+        }
+
+        .separator::before,
+        .separator::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .separator::before {
+            margin-right: 10px;
+        }
+
+        .separator::after {
+            margin-left: 10px;
+        }
+
+        .social-login {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .social-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--medium-gray);
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .social-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--box-shadow);
+        }
+
+        .social-btn i {
+            font-size: 20px;
+            margin-right: 0;
+        }
+
+        .google-btn i {
+            color: var(--danger-color);
+        }
+
+        .facebook-btn i {
+            color: #4267B2;
+        }
+
+        .apple-btn i {
+            color: #000;
+        }
+
+        .twitter-btn i {
+            color: #1DA1F2;
+        }
+
+        .form-footer {
+            margin-top: 25px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--secondary-color);
+        }
+
+        .form-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            margin-right: 10px;
+            accent-color: var(--primary-color);
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Terms and privacy policy link styles */
+        .terms-link {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .terms-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Login form */
+        #login-form {
+            display: block;
+        }
+
+        /* Register form - hidden by default */
+        #register-form {
+            display: none;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 60px 0 30px;
+            margin-top: auto;
+        }
+
+        .footer-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+        }
+
+        .footer-column h3 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 12px;
+        }
+
+        .footer-column ul li a {
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 14px;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--accent-color);
+            text-decoration: underline;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+
+        .social-icon:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .footer-bottom {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            font-size: 14px;
+            color: #bdc3c7;
+        }
+
+        /* Media Queries */
+        @media (max-width: 992px) {
+            .auth-container {
+                flex-direction: column;
+                max-width: 600px;
+            }
+
+            .auth-image {
+                display: none;
+            }
+
+            .footer-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .social-login {
+                flex-wrap: wrap;
+            }
+
+            .social-btn {
+                flex: 1 0 calc(50% - 8px);
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .auth-form-container {
+                padding: 30px 20px;
+            }
+
+            .social-login {
+                flex-direction: column;
+            }
+
+            .social-btn {
+                flex: 1 0 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-plane"></i> Skywalker Travel
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="#">Flights</a></li>
+                    <li><a href="#">Hotels</a></li>
+                    <li><a href="#">Packages</a></li>
+                    <li><a href="#">Car Rentals</a></li>
+                    <li><a href="#">Support</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="auth-container">
+                <!-- Left Image Section -->
+                <div class="auth-image">
+                    <div class="auth-image-overlay">
+                        <div class="auth-image-title">Explore the World with Skywalker Travel</div>
+                        <div class="auth-image-description">
+                            Join thousands of travelers who trust us for their journeys. Create an account to unlock
+                            exclusive benefits.
+                        </div>
+                        <ul class="auth-image-features">
+                            <li><i class="fas fa-check-circle"></i> Get personalized travel recommendations</li>
+                            <li><i class="fas fa-check-circle"></i> Save your favorite destinations</li>
+                            <li><i class="fas fa-check-circle"></i> Access exclusive member-only deals</li>
+                            <li><i class="fas fa-check-circle"></i> Faster checkout with saved details</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Right Form Section -->
+                <div class="auth-form-container">
+                    <div class="auth-tabs">
+                        <div class="auth-tab active" id="login-tab">Login</div>
+                        <div class="auth-tab" id="register-tab">Register</div>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form id="login-form">
+                        <h2 class="auth-form-title">Welcome Back</h2>
+
+                        <div class="social-login">
+                            <button type="button" class="social-btn google-btn">
+                                <i class="fab fa-google"></i>
+                            </button>
+                            <button type="button" class="social-btn facebook-btn">
+                                <i class="fab fa-facebook-f"></i>
+                            </button>
+                            <button type="button" class="social-btn apple-btn">
+                                <i class="fab fa-apple"></i>
+                            </button>
+                            <button type="button" class="social-btn twitter-btn">
+                                <i class="fab fa-twitter"></i>
+                            </button>
+                        </div>
+
+                        <div class="separator">or continue with email</div>
+
+                        <div class="form-group">
+                            <label for="login-email">Email Address</label>
+                            <input type="email" id="login-email" placeholder="Enter your email">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="login-password">Password</label>
+                            <div class="password-input-container">
+                                <input type="password" id="login-password" placeholder="Enter your password">
+                                <i class="fas fa-eye-slash password-toggle-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="remember-me">
+                            <label for="remember-me">Keep me signed in</label>
+                        </div>
+
+                        <a href="#" class="forgot-password">Forgot password?</a>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </button>
+                        </div>
+
+                        <div class="form-footer">
+                            Don't have an account? <a href="#" id="switch-to-register">Register now</a>
+                        </div>
+                    </form>
+
+                    <!-- Register Form -->
+                    <form id="register-form">
+                        <h2 class="auth-form-title">Create an Account</h2>
+
+                        <div class="social-login">
+                            <button type="button" class="social-btn google-btn">
+                                <i class="fab fa-google"></i>
+                            </button>
+                            <button type="button" class="social-btn facebook-btn">
+                                <i class="fab fa-facebook-f"></i>
+                            </button>
+                            <button type="button" class="social-btn apple-btn">
+                                <i class="fab fa-apple"></i>
+                            </button>
+                            <button type="button" class="social-btn twitter-btn">
+                                <i class="fab fa-twitter"></i>
+                            </button>
+                        </div>
+
+                        <div class="separator">or register with email</div>
+
+                        <div class="form-group">
+                            <label for="register-name">Full Name</label>
+                            <input type="text" id="register-name" placeholder="Enter your full name">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-email">Email Address</label>
+                            <input type="email" id="register-email" placeholder="Enter your email">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-password">Password</label>
+                            <div class="password-input-container">
+                                <input type="password" id="register-password" placeholder="Create a password">
+                                <i class="fas fa-eye-slash password-toggle-icon"></i>
+                            </div>
+                            <div class="password-strength">
+                                <div class="password-strength-meter"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-confirm-password">Confirm Password</label>
+                            <div class="password-input-container">
+                                <input type="password" id="register-confirm-password"
+                                    placeholder="Confirm your password">
+                                <i class="fas fa-eye-slash password-toggle-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="terms-agree">
+                            <label for="terms-agree">
+                                I agree to the <a href="#" class="terms-link">Terms of Service</a> and <a href="#"
+                                    class="terms-link">Privacy Policy</a>
+                            </label>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-plus"></i> Create Account
+                            </button>
+                        </div>
+
+                        <div class="form-footer">
+                            Already have an account? <a href="#" id="switch-to-login">Login</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-container">
+                <div class="footer-column">
+                    <h3>Skywalker Travel</h3>
+                    <p style="margin-bottom: 20px; color: #ecf0f1; font-size: 14px;">
+                        The most trusted travel booking platform since 2010, offering the best prices and support.
+                    </p>
+                    <div class="social-icons">
+                        <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Company</h3>
+                    <ul>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Press Center</a></li>
+                        <li><a href="#">Investor Relations</a></li>
+                        <li><a href="#">Partner Program</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Booking Policy</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li><a href="#">Travel Guides</a></li>
+                        <li><a href="#">Flight Status</a></li>
+                        <li><a href="#">Route Maps</a></li>
+                        <li><a href="#">Travel Blog</a></li>
+                        <li><a href="#">Travel Tips</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Skywalker Travel. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript for Form Switching and Password Toggle -->
+    <script>
+        // Tab switching functionality
+        document.getElementById('login-tab').addEventListener('click', function () {
+            document.getElementById('login-tab').classList.add('active');
+            document.getElementById('register-tab').classList.remove('active');
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('register-form').style.display = 'none';
+        });
+
+        document.getElementById('register-tab').addEventListener('click', function () {
+            document.getElementById('register-tab').classList.add('active');
+            document.getElementById('login-tab').classList.remove('active');
+            document.getElementById('register-form').style.display = 'block';
+            document.getElementById('login-form').style.display = 'none';
+        });
+
+        // Link switching functionality
+        document.getElementById('switch-to-register').addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('register-tab').click();
+        });
+
+        document.getElementById('switch-to-login').addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('login-tab').click();
+        });
+
+        // Password toggle functionality
+        const passwordToggleIcons = document.querySelectorAll('.password-toggle-icon');
+        passwordToggleIcons.forEach(icon => {
+            icon.addEventListener('click', function () {
+                const passwordInput = this.previousElementSibling;
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    this.classList.remove('fa-eye-slash');
+                    this.classList.add('fa-eye');
+                } else {
+                    passwordInput.type = 'password';
+                    this.classList.remove('fa-eye');
+                    this.classList.add('fa-eye-slash');
+                }
+            });
+        });
+
+        // Password strength meter
+        const registerPassword = document.getElementById('register-password');
+        const strengthMeter = document.querySelector('.password-strength-meter');
+
+        registerPassword.addEventListener('input', function () {
+            const password = this.value;
+            let strength = 0;
+
+            if (password.length >= 8) strength += 1;
+            if (password.match(/[A-Z]/)) strength += 1;
+            if (password.match(/[0-9]/)) strength += 1;
+            if (password.match(/[^A-Za-z0-9]/)) strength += 1;
+
+            strengthMeter.className = 'password-strength-meter';
+
+            if (password.length === 0) {
+                strengthMeter.style.width = '0%';
+            } else if (strength < 2) {
+                strengthMeter.classList.add('weak');
+            } else if (strength < 4) {
+                strengthMeter.classList.add('medium');
+            } else {
+                strengthMeter.classList.add('strong');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>天行者旅行 - 搜索结果</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1976d2;
+            --secondary-color: #ff6d00;
+            --light-bg: #f8f9fa;
+            --dark-text: #333;
+            --light-text: #666;
+            --white: #fff;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            --transition: all 0.3s ease;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --gray-light: #f1f1f1;
+            --gray: #e0e0e0;
+            --max-width: 1200px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: var(--dark-text);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 通用样式 */
+        .container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 20px;
+            width: 100%;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: var(--white);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-primary:hover,
+        .btn-secondary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+
+        /* Header样式 */
+        header {
+            background-color: var(--white);
+            box-shadow: var(--box-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo i {
+            margin-right: 10px;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 20px;
+        }
+
+        nav ul li a {
+            color: var(--dark-text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        nav ul li a:hover {
+            color: var(--primary-color);
+        }
+
+        .user-actions {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-actions a {
+            margin-left: 15px;
+            color: var(--dark-text);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .user-actions a i {
+            margin-right: 5px;
+        }
+
+        /* 搜索摘要区域 */
+        .search-summary {
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding: 15px 0;
+        }
+
+        .search-summary-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .search-route {
+            font-size: 22px;
+            font-weight: 600;
+            margin-right: 20px;
+        }
+
+        .search-details {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .search-details span {
+            margin-right: 15px;
+        }
+
+        .modify-search {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modify-search:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .modify-search i {
+            margin-right: 5px;
+        }
+
+        /* 主要内容区域 */
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            margin: 30px auto;
+            max-width: var(--max-width);
+            padding: 0 20px;
+            flex: 1;
+        }
+
+        /* 过滤器样式 */
+        .filters {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 20px;
+            position: sticky;
+            top: 90px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        .filter-group {
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--gray-light);
+            padding-bottom: 20px;
+        }
+
+        .filter-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .filter-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .filter-title i {
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .price-range-slider {
+            padding: 10px 0;
+        }
+
+        .range-values {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .checkbox-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-item input {
+            margin-right: 10px;
+        }
+
+        .time-filters {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .time-filter {
+            background-color: var(--gray-light);
+            padding: 8px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .time-filter.active {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        /* 结果区域样式 */
+        .results-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--white);
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            text-align: center;
+            width: 100%;
+        }
+
+        .results-count {
+            font-weight: 600;
+        }
+
+        .sort-options {
+            display: flex;
+            align-items: center;
+        }
+
+        .sort-by {
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+        .sort-option {
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+            margin-left: 5px;
+        }
+
+        .sort-option.active {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        /* 航班卡片样式 */
+        .flight-card {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+            transition: var(--transition);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 30px;
+            position: relative;
+            cursor: pointer;
+            width: 100%;
+            margin: 0 auto;
+            align-items: center;
+        }
+
+        .flight-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .airline-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-right: 20px;
+            border-right: 1px solid var(--gray-light);
+        }
+
+        .airline-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .airline-logo img {
+            width: 100%;
+            height: auto;
+        }
+
+        .airline-name {
+            font-size: 14px;
+            text-align: center;
+            color: var(--dark-text);
+            font-weight: 500;
+        }
+
+        .flight-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .flight-route {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .departure,
+        .arrival {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .time {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark-text);
+        }
+
+        .city {
+            color: var(--light-text);
+            font-size: 14px;
+        }
+
+        .flight-path {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 20px;
+            position: relative;
+            min-width: 150px;
+        }
+
+        .duration {
+            font-size: 14px;
+            color: var(--light-text);
+            margin-bottom: 5px;
+        }
+
+        .path-line {
+            width: 100%;
+            height: 2px;
+            background-color: var(--gray-light);
+            position: relative;
+            margin: 5px 0;
+        }
+
+        .path-line::before,
+        .path-line::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background-color: var(--gray);
+            border-radius: 50%;
+            top: -2px;
+        }
+
+        .path-line::before {
+            left: 0;
+        }
+
+        .path-line::after {
+            right: 0;
+        }
+
+        .path-type {
+            font-size: 12px;
+            color: var(--success-color);
+        }
+
+        .flight-info {
+            display: flex;
+            color: var(--light-text);
+            font-size: 14px;
+        }
+
+        .flight-info div {
+            margin-right: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .flight-info i {
+            margin-right: 5px;
+        }
+
+        .price-action {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .price {
+            text-align: right;
+        }
+
+        .price-amount {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--secondary-color);
+        }
+
+        .price-label {
+            font-size: 12px;
+            color: var(--light-text);
+        }
+
+        .book-button {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            padding: 10px 25px;
+            border-radius: var(--border-radius);
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .book-button:hover {
+            background-color: #e65100;
+            transform: translateY(-2px);
+        }
+
+        .flight-tag {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: var(--success-color);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .stopover-info {
+            font-size: 13px;
+            color: var(--warning-color);
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        /* 页脚样式 */
+        footer {
+            background-color: #263238;
+            color: #f5f5f5;
+            padding: 60px 0 30px;
+            margin-top: 50px;
+        }
+
+        .footer-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+        }
+
+        .footer-column h3 {
+            color: var(--white);
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 12px;
+        }
+
+        .footer-column ul li a {
+            color: #bdbdbd;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--white);
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-icons a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: var(--white);
+            transition: var(--transition);
+        }
+
+        .social-icons a:hover {
+            background-color: var(--primary-color);
+            transform: translateY(-3px);
+        }
+
+        .copyright {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #bdbdbd;
+        }
+
+        /* 加载更多按钮 */
+        .load-more {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .load-more .btn-outline {
+            padding: 12px 30px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .load-more .btn-outline:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                width: 100%;
+                padding: 0 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+            }
+
+            nav ul {
+                margin-top: 15px;
+            }
+
+            .search-route {
+                font-size: 18px;
+            }
+
+            .search-details {
+                display: none;
+            }
+
+            .flight-card {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .airline-info {
+                flex-direction: row;
+                padding-right: 0;
+                border-right: none;
+                border-bottom: 1px solid var(--gray-light);
+                padding-bottom: 15px;
+            }
+
+            .airline-logo {
+                margin-bottom: 0;
+                margin-right: 15px;
+            }
+
+            .price-action {
+                flex-direction: row;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 头部导航 -->
+    <header>
+        <div class="container header-container">
+            <a href="#" class="logo">
+                <i class="fas fa-plane-departure"></i>
+                Skywalker Travel
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active"><i class="fas fa-plane"></i> Flights</a></li>
+                    <li><a href="#"><i class="fas fa-hotel"></i> Hotels</a></li>
+                    <li><a href="#"><i class="fas fa-car"></i> Car Rental</a></li>
+                    <li><a href="#"><i class="fas fa-suitcase-rolling"></i> Vacation Packages</a></li>
+                    <li><a href="#"><i class="fas fa-percentage"></i> Deals</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <a href="#"><i class="far fa-user-circle"></i> Sign In</a>
+                <a href="#"><i class="fas fa-question-circle"></i> Help</a>
+                <a href="#" class="btn btn-primary">Register</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 搜索摘要 -->
+    <section class="search-summary">
+        <div class="container search-summary-container">
+            <div class="search-info">
+                <div class="search-route">Beijing → Shanghai</div>
+                <div class="search-details">
+                    <span><i class="far fa-calendar-alt"></i> October 15, 2024</span>
+                    <span><i class="fas fa-user"></i> 1 Adult</span>
+                    <span><i class="fas fa-chair"></i> Economy</span>
+                </div>
+            </div>
+            <div class="modify-search">
+                <i class="fas fa-edit"></i> Modify Search
+            </div>
+        </div>
+    </section>
+
+    <!-- 主要内容 -->
+    <div class="container main-content">
+        <!-- 左侧过滤器 -->
+        <aside class="filters">
+            <div class="filter-group">
+                <div class="filter-title">
+                    Price Range
+                    <i class="fas fa-chevron-up"></i>
+                </div>
+                <div class="price-range-slider">
+                    <input type="range" min="300" max="5000" value="2000" class="slider" style="width: 100%;">
+                    <div class="range-values">
+                        <span>$300</span>
+                        <span>$5000</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-title">
+                    Airlines
+                    <i class="fas fa-chevron-up"></i>
+                </div>
+                <div class="checkbox-list">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="airline-all" checked>
+                        <label for="airline-all">All Airlines</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="airline-ca">
+                        <label for="airline-ca">Air China</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="airline-mu">
+                        <label for="airline-mu">China Eastern</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="airline-cz">
+                        <label for="airline-cz">China Southern</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="airline-hu">
+                        <label for="airline-hu">Hainan Airlines</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-title">
+                    Departure Time
+                    <i class="fas fa-chevron-up"></i>
+                </div>
+                <div class="time-filters">
+                    <div class="time-filter">Morning<br>00:00-06:00</div>
+                    <div class="time-filter active">AM<br>06:00-12:00</div>
+                    <div class="time-filter">PM<br>12:00-18:00</div>
+                    <div class="time-filter">Evening<br>18:00-24:00</div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-title">
+                    Arrival Time
+                    <i class="fas fa-chevron-up"></i>
+                </div>
+                <div class="time-filters">
+                    <div class="time-filter">Morning<br>00:00-06:00</div>
+                    <div class="time-filter">AM<br>06:00-12:00</div>
+                    <div class="time-filter active">PM<br>12:00-18:00</div>
+                    <div class="time-filter">Evening<br>18:00-24:00</div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-title">
+                    Stops
+                    <i class="fas fa-chevron-up"></i>
+                </div>
+                <div class="checkbox-list">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="stop-0" checked>
+                        <label for="stop-0">Nonstop</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="stop-1">
+                        <label for="stop-1">1 Stop</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="stop-2">
+                        <label for="stop-2">2+ Stops</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-title">
+                    More Options
+                    <i class="fas fa-chevron-up"></i>
+                </div>
+                <div class="checkbox-list">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="refundable">
+                        <label for="refundable">Refundable</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="baggage-included">
+                        <label for="baggage-included">Baggage Included</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="promotion">
+                        <label for="promotion">Special Offers</label>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 搜索结果 -->
+        <div class="results-container">
+            <div class="results-header">
+                <div class="results-count">Found 32 flights</div>
+                <div class="sort-options">
+                    <span class="sort-by">Sort by:</span>
+                    <span class="sort-option active">Recommended</span>
+                    <span class="sort-option">Price</span>
+                    <span class="sort-option">Time</span>
+                    <span class="sort-option">Duration</span>
+                </div>
+            </div>
+
+            <!-- 航班列表 -->
+            <div class="flight-card">
+                <div class="airline-info">
+                    <div class="airline-logo">
+                        <i class="fas fa-plane fa-2x"></i>
+                    </div>
+                    <div class="airline-name">Air China</div>
+                </div>
+
+                <div class="flight-details">
+                    <div class="flight-route">
+                        <div class="departure">
+                            <div class="time">08:35</div>
+                            <div class="city">Beijing Capital Airport T3</div>
+                        </div>
+                        <div class="flight-path">
+                            <div class="duration">2h 20m</div>
+                            <div class="path-line"></div>
+                            <div class="path-type">Nonstop</div>
+                        </div>
+                        <div class="arrival">
+                            <div class="time">10:55</div>
+                            <div class="city">Shanghai Hongqiao Airport T2</div>
+                        </div>
+                    </div>
+                    <div class="flight-info">
+                        <div><i class="fas fa-plane"></i> CA1234</div>
+                        <div><i class="fas fa-suitcase"></i> 20kg Baggage</div>
+                        <div><i class="fas fa-utensils"></i> Meal Included</div>
+                        <div><i class="fas fa-plane-departure"></i> Boeing 737-800</div>
+                    </div>
+                </div>
+
+                <div class="price-action">
+                    <div class="price">
+                        <div class="price-amount">$520</div>
+                        <div class="price-label">Tax Included</div>
+                    </div>
+                    <button class="book-button">Book</button>
+                </div>
+
+                <div class="flight-tag">Best Deal</div>
+            </div>
+
+            <div class="flight-card">
+                <div class="airline-info">
+                    <div class="airline-logo">
+                        <i class="fas fa-plane fa-2x"></i>
+                    </div>
+                    <div class="airline-name">China Eastern</div>
+                </div>
+
+                <div class="flight-details">
+                    <div class="flight-route">
+                        <div class="departure">
+                            <div class="time">11:20</div>
+                            <div class="city">Beijing Daxing Airport T1</div>
+                        </div>
+                        <div class="flight-path">
+                            <div class="duration">2h 15m</div>
+                            <div class="path-line"></div>
+                            <div class="path-type">Nonstop</div>
+                        </div>
+                        <div class="arrival">
+                            <div class="time">13:35</div>
+                            <div class="city">Shanghai Pudong Airport T1</div>
+                        </div>
+                    </div>
+                    <div class="flight-info">
+                        <div><i class="fas fa-plane"></i> MU5678</div>
+                        <div><i class="fas fa-suitcase"></i> 20kg Baggage</div>
+                        <div><i class="fas fa-utensils"></i> Meal Included</div>
+                        <div><i class="fas fa-plane-departure"></i> Airbus A320neo</div>
+                    </div>
+                </div>
+
+                <div class="price-action">
+                    <div class="price">
+                        <div class="price-amount">$580</div>
+                        <div class="price-label">Tax Included</div>
+                    </div>
+                    <button class="book-button">Book</button>
+                </div>
+            </div>
+
+            <div class="flight-card">
+                <div class="airline-info">
+                    <div class="airline-logo">
+                        <i class="fas fa-plane fa-2x"></i>
+                    </div>
+                    <div class="airline-name">China Southern</div>
+                </div>
+
+                <div class="flight-details">
+                    <div class="flight-route">
+                        <div class="departure">
+                            <div class="time">07:40</div>
+                            <div class="city">Beijing Capital Airport T2</div>
+                        </div>
+                        <div class="flight-path">
+                            <div class="duration">5h 10m</div>
+                            <div class="path-line"></div>
+                            <div class="path-type">1 Stop</div>
+                            <div class="stopover-info">Guangzhou Baiyun Airport | Layover 2h 35m</div>
+                        </div>
+                        <div class="arrival">
+                            <div class="time">12:50</div>
+                            <div class="city">Shanghai Hongqiao Airport T1</div>
+                        </div>
+                    </div>
+                    <div class="flight-info">
+                        <div><i class="fas fa-plane"></i> CZ3901 + CZ3562</div>
+                        <div><i class="fas fa-suitcase"></i> 23kg Baggage</div>
+                        <div><i class="fas fa-utensils"></i> Meal Included</div>
+                        <div><i class="fas fa-plane-departure"></i> Boeing 787-9</div>
+                    </div>
+                </div>
+
+                <div class="price-action">
+                    <div class="price">
+                        <div class="price-amount">$540</div>
+                        <div class="price-label">Tax Included</div>
+                    </div>
+                    <button class="book-button">Book</button>
+                </div>
+            </div>
+
+            <div class="flight-card">
+                <div class="airline-info">
+                    <div class="airline-logo">
+                        <i class="fas fa-plane fa-2x"></i>
+                    </div>
+                    <div class="airline-name">Hainan Airlines</div>
+                </div>
+
+                <div class="flight-details">
+                    <div class="flight-route">
+                        <div class="departure">
+                            <div class="time">15:50</div>
+                            <div class="city">Beijing Capital Airport T2</div>
+                        </div>
+                        <div class="flight-path">
+                            <div class="duration">2h 25m</div>
+                            <div class="path-line"></div>
+                            <div class="path-type">Nonstop</div>
+                        </div>
+                        <div class="arrival">
+                            <div class="time">18:15</div>
+                            <div class="city">Shanghai Pudong Airport T2</div>
+                        </div>
+                    </div>
+                    <div class="flight-info">
+                        <div><i class="fas fa-plane"></i> HU7615</div>
+                        <div><i class="fas fa-suitcase"></i> 30kg Baggage</div>
+                        <div><i class="fas fa-utensils"></i> Meal Included</div>
+                        <div><i class="fas fa-plane-departure"></i> Boeing 737 MAX</div>
+                    </div>
+                </div>
+
+                <div class="price-action">
+                    <div class="price">
+                        <div class="price-amount">$680</div>
+                        <div class="price-label">Tax Included</div>
+                    </div>
+                    <button class="book-button">Book</button>
+                </div>
+            </div>
+
+            <div class="flight-card">
+                <div class="airline-info">
+                    <div class="airline-logo">
+                        <i class="fas fa-plane fa-2x"></i>
+                    </div>
+                    <div class="airline-name">Air China</div>
+                </div>
+
+                <div class="flight-details">
+                    <div class="flight-route">
+                        <div class="departure">
+                            <div class="time">20:10</div>
+                            <div class="city">Beijing Capital Airport T3</div>
+                        </div>
+                        <div class="flight-path">
+                            <div class="duration">2h 15m</div>
+                            <div class="path-line"></div>
+                            <div class="path-type">Nonstop</div>
+                        </div>
+                        <div class="arrival">
+                            <div class="time">22:25</div>
+                            <div class="city">Shanghai Hongqiao Airport T2</div>
+                        </div>
+                    </div>
+                    <div class="flight-info">
+                        <div><i class="fas fa-plane"></i> CA1856</div>
+                        <div><i class="fas fa-suitcase"></i> 20kg Baggage</div>
+                        <div><i class="fas fa-utensils"></i> Meal Included</div>
+                        <div><i class="fas fa-plane-departure"></i> Airbus A330-300</div>
+                    </div>
+                </div>
+
+                <div class="price-action">
+                    <div class="price">
+                        <div class="price-amount">$610</div>
+                        <div class="price-label">Tax Included</div>
+                    </div>
+                    <button class="book-button">Book</button>
+                </div>
+            </div>
+
+            <!-- 加载更多按钮 -->
+            <div class="load-more">
+                <button class="btn btn-outline">Load More Flights</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="container footer-container">
+            <div class="footer-column">
+                <h3>Company</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Careers</a></li>
+                    <li><a href="#">News</a></li>
+                    <li><a href="#">Partners</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Customer Service</h3>
+                <ul>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                    <li><a href="#">FAQs</a></li>
+                    <li><a href="#">Feedback</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Booking Info</h3>
+                <ul>
+                    <li><a href="#">Baggage Policy</a></li>
+                    <li><a href="#">Payment Methods</a></li>
+                    <li><a href="#">Cancellation Policy</a></li>
+                    <li><a href="#">Travel Insurance</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Follow Us</h3>
+                <p>Get the latest deals and travel inspiration</p>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="copyright">
+            <p>© 2024 Skywalker Travel. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+
+</html>

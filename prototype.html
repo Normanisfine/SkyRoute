@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skywalker Travel - Flight Booking</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --secondary-color: #5f6368;
+            --accent-color: #ff5722;
+            --light-gray: #f8f9fa;
+            --medium-gray: #e0e0e0;
+            --dark-gray: #5f6368;
+            --success-color: #34a853;
+            --warning-color: #fbbc04;
+            --danger-color: #ea4335;
+            --font-main: 'Segoe UI', Arial, sans-serif;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: #333;
+            background-color: #f5f7fa;
+            line-height: 1.6;
+        }
+
+        /* 通用样式 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-primary:hover,
+        .btn-secondary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+
+        /* Header样式 */
+        header {
+            background-color: white;
+            box-shadow: var(--box-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo i {
+            margin-right: 10px;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 25px;
+        }
+
+        nav ul li a {
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: var(--primary-color);
+        }
+
+        .user-actions {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-actions a {
+            margin-left: 15px;
+            color: var(--secondary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .user-actions a i {
+            margin-right: 5px;
+        }
+
+        .user-actions a.btn {
+            color: white;
+        }
+
+        /* Hero区域样式 */
+        .hero {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            position: relative;
+            text-align: center;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .hero-content h1 {
+            font-size: 54px;
+            margin-bottom: 20px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero-content p {
+            font-size: 20px;
+            margin-bottom: 30px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 搜索模块样式 */
+        .search-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 30px;
+            margin-top: -70px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .search-tabs {
+            display: flex;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .search-tab {
+            padding: 15px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            position: relative;
+            color: var(--secondary-color);
+            transition: var(--transition);
+        }
+
+        .search-tab.active {
+            color: var(--primary-color);
+        }
+
+        .search-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+
+        .search-tab i {
+            margin-right: 8px;
+        }
+
+        .search-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--secondary-color);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            font-size: 15px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2);
+        }
+
+        .form-group i {
+            position: absolute;
+            right: 15px;
+            top: 39px;
+            color: var(--secondary-color);
+        }
+
+        .search-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        .search-button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .search-button:hover {
+            background-color: #e65100;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(230, 81, 0, 0.3);
+        }
+
+        .advanced-options {
+            display: flex;
+            align-items: center;
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .advanced-options i {
+            margin-left: 5px;
+        }
+
+        /* 特价促销区域 */
+        .deals-section {
+            padding: 60px 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section-header h2 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .section-header p {
+            color: var(--secondary-color);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .deals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .deal-card {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .deal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .deal-image {
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .deal-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .deal-card:hover .deal-image img {
+            transform: scale(1.05);
+        }
+
+        .deal-content {
+            padding: 20px;
+        }
+
+        .deal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .deal-price {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .price {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .deal-dates {
+            color: var(--secondary-color);
+            font-size: 14px;
+        }
+
+        /* 底部样式 */
+        footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 60px 0 30px;
+        }
+
+        .footer-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+        }
+
+        .footer-column h3 {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 12px;
+        }
+
+        .footer-column ul li a {
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 14px;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--accent-color);
+            text-decoration: underline;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-icons a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        .social-icons a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .copyright {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #bdc3c7;
+            font-size: 14px;
+        }
+
+        @media (max-width: 992px) {
+            .footer-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                height: 400px;
+            }
+
+            .hero-content {
+                margin-left: 0;
+                text-align: center;
+            }
+
+            .search-container {
+                margin-top: -50px;
+            }
+
+            .search-form {
+                grid-template-columns: 1fr;
+            }
+
+            .header-container {
+                flex-direction: column;
+            }
+
+            nav ul {
+                margin-top: 15px;
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 头部导航 -->
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-plane"></i> Skywalker Travel
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="#"><i class="fas fa-plane"></i> Flights</a></li>
+                    <li><a href="#"><i class="fas fa-hotel"></i> Hotels</a></li>
+                    <li><a href="#"><i class="fas fa-car"></i> Car Rentals</a></li>
+                    <li><a href="#"><i class="fas fa-suitcase-rolling"></i> Packages</a></li>
+                    <li><a href="#"><i class="fas fa-percentage"></i> Deals</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <a href="login.html"><i class="far fa-user-circle"></i> Sign In</a>
+                <a href="#"><i class="fas fa-question-circle"></i> Help</a>
+                <a href="login.html" class="btn btn-primary">Register</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero区域 -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Explore the World, Start Here</h1>
+            <p>Search for special offers from hundreds of airlines and find your ideal travel route</p>
+            <a href="#" class="btn btn-secondary">View Flight Deals</a>
+        </div>
+    </section>
+
+    <!-- 搜索模块 -->
+    <div class="container">
+        <div class="search-container">
+            <div class="search-tabs">
+                <div class="search-tab active"><i class="fas fa-plane"></i> One Way</div>
+                <div class="search-tab"><i class="fas fa-exchange-alt"></i> Round Trip</div>
+                <div class="search-tab"><i class="fas fa-random"></i> Multi-City</div>
+            </div>
+            <form>
+                <div class="search-form">
+                    <div class="form-group">
+                        <label for="departure">From</label>
+                        <input type="text" id="departure" placeholder="Beijing">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="form-group">
+                        <label for="arrival">To</label>
+                        <input type="text" id="arrival" placeholder="Shanghai">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="form-group">
+                        <label for="departure-date">Departure Date</label>
+                        <input type="date" id="departure-date">
+                        <i class="far fa-calendar-alt"></i>
+                    </div>
+                    <div class="form-group">
+                        <label for="passengers">Passengers</label>
+                        <select id="passengers">
+                            <option value="1">1 Adult</option>
+                            <option value="2">2 Adults</option>
+                            <option value="3">3 Adults</option>
+                            <option value="4">4 Adults</option>
+                        </select>
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="form-group">
+                        <label for="cabin-class">Cabin Class</label>
+                        <select id="cabin-class">
+                            <option value="economy">Economy</option>
+                            <option value="premium">Premium Economy</option>
+                            <option value="business">Business</option>
+                            <option value="first">First Class</option>
+                        </select>
+                        <i class="fas fa-chair"></i>
+                    </div>
+                </div>
+                <div class="search-actions">
+                    <div class="advanced-options">
+                        Advanced Options <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <button type="submit" class="search-button">
+                        <i class="fas fa-search"></i> Search Flights
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 特价机票区域 -->
+    <section class="deals-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Featured Flight Deals</h2>
+                <p>Selected special fares to popular destinations worldwide, limited time offers</p>
+            </div>
+            <div class="deals-grid">
+                <div class="deal-card">
+                    <div class="deal-image">
+                        <img src="https://images.unsplash.com/photo-1451188502541-13943edb6acb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+                            alt="Shanghai">
+                    </div>
+                    <div class="deal-content">
+                        <div class="deal-title">Beijing - Shanghai</div>
+                        <div class="deal-dates">Oct 15 - Oct 22, 2024</div>
+                        <div class="deal-price">
+                            <span>One way from</span>
+                            <span class="price">$520</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="deal-card">
+                    <div class="deal-image">
+                        <img src="https://images.unsplash.com/photo-1548919973-5cef591cb5c5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+                            alt="Guangzhou">
+                    </div>
+                    <div class="deal-content">
+                        <div class="deal-title">Beijing - Guangzhou</div>
+                        <div class="deal-dates">Nov 5 - Nov 12, 2024</div>
+                        <div class="deal-price">
+                            <span>One way from</span>
+                            <span class="price">$680</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="deal-card">
+                    <div class="deal-image">
+                        <img src="https://images.unsplash.com/photo-1504885678510-0f45449ec46b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+                            alt="Chengdu">
+                    </div>
+                    <div class="deal-content">
+                        <div class="deal-title">Beijing - Chengdu</div>
+                        <div class="deal-dates">Oct 25 - Nov 2, 2024</div>
+                        <div class="deal-price">
+                            <span>One way from</span>
+                            <span class="price">$650</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="container">
+            <div class="footer-container">
+                <div class="footer-column">
+                    <h3>Skywalker Travel</h3>
+                    <p style="margin-bottom: 20px; color: #ecf0f1; font-size: 14px;">
+                        The most trusted travel booking platform since 2010, offering the best prices and support.
+                    </p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Company</h3>
+                    <ul>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Press Center</a></li>
+                        <li><a href="#">Investor Relations</a></li>
+                        <li><a href="#">Partner Program</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Booking Policy</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li><a href="#">Travel Guides</a></li>
+                        <li><a href="#">Flight Status</a></li>
+                        <li><a href="#">Route Maps</a></li>
+                        <li><a href="#">Travel Blog</a></li>
+                        <li><a href="#">Travel Tips</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2024 Skywalker Travel. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

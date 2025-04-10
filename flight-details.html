@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skywalker Travel - Flight Details</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --secondary-color: #5f6368;
+            --accent-color: #ff5722;
+            --light-gray: #f8f9fa;
+            --medium-gray: #e0e0e0;
+            --dark-gray: #5f6368;
+            --success-color: #34a853;
+            --warning-color: #fbbc04;
+            --danger-color: #ea4335;
+            --font-main: 'Segoe UI', Arial, sans-serif;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: #333;
+            background-color: #f5f7fa;
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: white;
+            box-shadow: var(--box-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo i {
+            margin-right: 10px;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 25px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: var(--secondary-color);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover,
+        nav ul li a.active {
+            color: var(--primary-color);
+        }
+
+        .user-actions {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-actions a {
+            margin-left: 15px;
+            color: var(--secondary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .user-actions a i {
+            margin-right: 5px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+        }
+
+        .btn-secondary {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--medium-gray);
+            color: var(--secondary-color);
+        }
+
+        .btn-primary:hover,
+        .btn-secondary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background-color: var(--light-gray);
+            padding: 12px 0;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            list-style: none;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .breadcrumb-item:not(:last-child)::after {
+            content: '>';
+            margin: 0 10px;
+            color: var(--secondary-color);
+        }
+
+        .breadcrumb-item a {
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        .breadcrumb-item.active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* Flight Summary Bar */
+        .flight-summary-bar {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 25px 0;
+            margin-bottom: 30px;
+        }
+
+        .flight-route-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .route-cities {
+            display: flex;
+            align-items: center;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .route-cities i {
+            margin: 0 15px;
+        }
+
+        .route-date {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .flight-type {
+            display: inline-block;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-title i {
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+
+        .card-content {
+            padding: 25px;
+        }
+
+        /* Flight Details Card */
+        .flight-detail-card .card-content {
+            padding: 0;
+        }
+
+        .flight-overview {
+            background-color: var(--light-gray);
+            padding: 25px;
+        }
+
+        .flight-overview-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .flight-route {
+            display: flex;
+            align-items: center;
+        }
+
+        .flight-city {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .flight-path {
+            margin: 0 15px;
+            position: relative;
+            width: 150px;
+        }
+
+        .flight-path-line {
+            height: 2px;
+            background-color: var(--primary-color);
+            position: relative;
+        }
+
+        .flight-path-line::before,
+        .flight-path-line::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            top: -3px;
+        }
+
+        .flight-path-line::before {
+            left: 0;
+        }
+
+        .flight-path-line::after {
+            right: 0;
+        }
+
+        .flight-date {
+            text-align: center;
+            font-size: 14px;
+            color: var(--secondary-color);
+            margin-top: 8px;
+        }
+
+        .flight-price {
+            text-align: right;
+        }
+
+        .price-amount {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .price-taxes {
+            font-size: 14px;
+            color: var(--secondary-color);
+        }
+
+        .flight-main-details {
+            padding: 25px;
+        }
+
+        .airline-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .airline-logo {
+            width: 50px;
+            height: 50px;
+            background-color: var(--light-gray);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: var(--primary-color);
+        }
+
+        .airline-name {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .flight-number {
+            font-size: 14px;
+            color: var(--secondary-color);
+        }
+
+        .flight-detailed-route {
+            display: flex;
+            margin-bottom: 25px;
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            margin-right: 20px;
+            position: relative;
+            padding: 0 10px;
+        }
+
+        .timeline::after {
+            content: '';
+            position: absolute;
+            top: 30px;
+            bottom: 30px;
+            left: 50%;
+            width: 2px;
+            background-color: var(--medium-gray);
+        }
+
+        .departure-time,
+        .arrival-time {
+            font-size: 20px;
+            font-weight: 700;
+            position: relative;
+            z-index: 2;
+            background-color: white;
+            padding: 5px 0;
+        }
+
+        .flight-route-details {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .departure-info,
+        .arrival-info {
+            padding: 10px 0;
+        }
+
+        .airport-name {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .airport-code {
+            font-size: 14px;
+            color: var(--secondary-color);
+            margin-top: 3px;
+        }
+
+        .flight-date {
+            font-size: 14px;
+            color: var(--secondary-color);
+            margin-top: 3px;
+        }
+
+        .flight-duration-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .flight-duration {
+            background-color: var(--light-gray);
+            padding: 10px 20px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .duration-time {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .duration-label {
+            font-size: 12px;
+            color: var(--secondary-color);
+        }
+
+        .aircraft-info {
+            padding: 15px 0;
+            border-top: 1px solid var(--medium-gray);
+            border-bottom: 1px solid var(--medium-gray);
+            margin-bottom: 25px;
+            text-align: center;
+            color: var(--secondary-color);
+        }
+
+        .flight-amenities {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .amenity {
+            display: flex;
+            align-items: center;
+        }
+
+        .amenity i {
+            color: var(--primary-color);
+            margin-right: 10px;
+            font-size: 18px;
+        }
+
+        .amenity-name {
+            font-size: 14px;
+        }
+
+        /* Information Cards */
+        .info-list {
+            list-style: none;
+        }
+
+        .info-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--medium-gray);
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .info-list li:last-child {
+            border-bottom: none;
+        }
+
+        .info-list li i {
+            color: var(--primary-color);
+            margin-right: 10px;
+            margin-top: 5px;
+        }
+
+        /* Price Breakdown */
+        .price-breakdown {
+            padding: 25px;
+        }
+
+        .price-breakdown h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .price-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .price-label {
+            color: var(--secondary-color);
+        }
+
+        .price-value {
+            font-weight: 500;
+        }
+
+        .price-item:last-of-type {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--medium-gray);
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        /* Booking Options */
+        .booking-options {
+            padding: 25px;
+        }
+
+        .booking-options h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .booking-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .booking-notes {
+            margin-top: 25px;
+        }
+
+        .booking-notes p {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+        }
+
+        .booking-notes p i {
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 60px 0 30px;
+        }
+
+        .footer-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+        }
+
+        .footer-column h3 {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 12px;
+        }
+
+        .footer-column ul li a {
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 14px;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--accent-color);
+            text-decoration: underline;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-icons a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        .social-icons a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .copyright {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #bdc3c7;
+            font-size: 14px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+            }
+
+            nav ul {
+                margin-top: 15px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            nav ul li {
+                margin: 5px 10px;
+            }
+
+            .user-actions {
+                margin-top: 15px;
+                justify-content: center;
+            }
+
+            .flight-route-summary {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .flight-overview-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .flight-price {
+                text-align: left;
+            }
+
+            .flight-detailed-route {
+                flex-direction: column;
+            }
+
+            .timeline {
+                flex-direction: row;
+                justify-content: space-between;
+                margin-bottom: 20px;
+                margin-right: 0;
+            }
+
+            .timeline::after {
+                top: 50%;
+                bottom: auto;
+                left: 30px;
+                right: 30px;
+                width: auto;
+                height: 2px;
+            }
+
+            .flight-amenities {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .flight-route {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .flight-path {
+                width: 100%;
+            }
+
+            .flight-amenities {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-plane"></i> Skywalker Travel
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active">Flights</a></li>
+                    <li><a href="#">Hotels</a></li>
+                    <li><a href="#">Car Rentals</a></li>
+                    <li><a href="#">Packages</a></li>
+                    <li><a href="#">Deals</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <a href="login.html"><i class="far fa-user-circle"></i> Sign In</a>
+                <a href="#"><i class="fas fa-question-circle"></i> Help</a>
+                <a href="login.html" class="btn btn-primary">Register</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <div class="container">
+            <ul class="breadcrumb-list">
+                <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                <li class="breadcrumb-item"><a href="#">Flights</a></li>
+                <li class="breadcrumb-item"><a href="search-results.html">Search Results</a></li>
+                <li class="breadcrumb-item active">Flight Details</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Flight Summary Bar -->
+    <div class="flight-summary-bar">
+        <div class="container">
+            <div class="flight-route-summary">
+                <div class="route-info">
+                    <div class="route-cities">
+                        Beijing <i class="fas fa-long-arrow-alt-right"></i> Shanghai
+                    </div>
+                    <div class="route-date">October 15, 2024</div>
+                </div>
+                <div class="flight-type">
+                    <i class="fas fa-plane"></i> One Way Flight
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container main-content">
+        <!-- Left Column - Flight Details -->
+        <div class="left-column">
+            <div class="card flight-detail-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-info-circle"></i> Flight Details
+                    </h2>
+                </div>
+
+                <div class="flight-overview">
+                    <div class="flight-overview-content">
+                        <div class="flight-route">
+                            <div class="flight-city">Beijing (PEK)</div>
+                            <div class="flight-path">
+                                <div class="flight-path-line"></div>
+                                <div class="flight-date">Oct 15, 2024</div>
+                            </div>
+                            <div class="flight-city">Shanghai (SHA)</div>
+                        </div>
+                        <div class="flight-price">
+                            <div class="price-amount">$520</div>
+                            <div class="price-taxes">Taxes & fees included</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flight-main-details">
+                    <div class="airline-info">
+                        <div class="airline-logo">
+                            <i class="fas fa-plane"></i>
+                        </div>
+                        <div>
+                            <div class="airline-name">Air China</div>
+                            <div class="flight-number">Flight CA1234</div>
+                        </div>
+                    </div>
+
+                    <div class="flight-detailed-route">
+                        <div class="timeline">
+                            <div class="departure-time">08:35</div>
+                            <div class="arrival-time">10:55</div>
+                        </div>
+                        <div class="flight-route-details">
+                            <div class="departure-info">
+                                <div class="airport-name">Beijing Capital International Airport</div>
+                                <div class="airport-code">Terminal 3 (PEK)</div>
+                                <div class="flight-date">October 15, 2024</div>
+                            </div>
+                            <div class="flight-duration-container">
+                                <div class="flight-duration">
+                                    <div class="duration-time">2h 20m</div>
+                                    <div class="duration-label">Duration</div>
+                                </div>
+                            </div>
+                            <div class="arrival-info">
+                                <div class="airport-name">Shanghai Hongqiao International Airport</div>
+                                <div class="airport-code">Terminal 2 (SHA)</div>
+                                <div class="flight-date">October 15, 2024</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="aircraft-info">
+                        <p>Boeing 737-800 | Economy Class</p>
+                    </div>
+
+                    <div class="flight-amenities">
+                        <div class="amenity">
+                            <i class="fas fa-suitcase"></i>
+                            <span class="amenity-name">20kg Baggage</span>
+                        </div>
+                        <div class="amenity">
+                            <i class="fas fa-utensils"></i>
+                            <span class="amenity-name">Meal Included</span>
+                        </div>
+                        <div class="amenity">
+                            <i class="fas fa-wifi"></i>
+                            <span class="amenity-name">Wi-Fi Available</span>
+                        </div>
+                        <div class="amenity">
+                            <i class="fas fa-charging-station"></i>
+                            <span class="amenity-name">Power Outlets</span>
+                        </div>
+                        <div class="amenity">
+                            <i class="fas fa-tv"></i>
+                            <span class="amenity-name">Entertainment</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-suitcase"></i> Baggage Information
+                    </h2>
+                </div>
+                <div class="card-content">
+                    <ul class="info-list">
+                        <li>
+                            <i class="fas fa-briefcase"></i>
+                            <span>Carry-on: 1 personal item (up to 7kg)</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-suitcase"></i>
+                            <span>Checked baggage: 1 bag (up to 20kg)</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-luggage-cart"></i>
+                            <span>Additional baggage can be purchased during checkout</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>Oversized and special items may incur additional fees</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-calendar-times"></i> Cancellation Policy
+                    </h2>
+                </div>
+                <div class="card-content">
+                    <ul class="info-list">
+                        <li>
+                            <i class="fas fa-check-circle"></i>
+                            <span>Free cancellation within 24 hours of booking</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-percentage"></i>
+                            <span>70% refund if cancelled more than 7 days before departure</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-percentage"></i>
+                            <span>50% refund if cancelled between 3-7 days before departure</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-times-circle"></i>
+                            <span>Non-refundable if cancelled less than 3 days before departure</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-exchange-alt"></i>
+                            <span>Flight changes available with a $50 service fee</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Pricing & Booking -->
+        <div class="right-column">
+            <div class="card">
+                <div class="price-breakdown">
+                    <h3>Price Breakdown</h3>
+                    <div class="price-item">
+                        <span class="price-label">Base Fare</span>
+                        <span class="price-value">$440</span>
+                    </div>
+                    <div class="price-item">
+                        <span class="price-label">Taxes & Fees</span>
+                        <span class="price-value">$68</span>
+                    </div>
+                    <div class="price-item">
+                        <span class="price-label">Service Fee</span>
+                        <span class="price-value">$12</span>
+                    </div>
+                    <div class="price-item">
+                        <span class="price-label">Total</span>
+                        <span class="price-value">$520</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="booking-options">
+                    <h3>Booking Options</h3>
+                    <a href="booking.html" class="btn btn-primary booking-button">
+                        Book Now
+                    </a>
+                    <button class="btn btn-outline booking-button">
+                        <i class="far fa-heart"></i> Save for Later
+                    </button>
+
+                    <div class="booking-notes">
+                        <p><i class="fas fa-lock"></i> Secure booking process with SSL encryption</p>
+                        <p><i class="fas fa-credit-card"></i> Multiple payment options available</p>
+                        <p><i class="fas fa-star"></i> Best price guarantee</p>
+                        <p><i class="fas fa-headset"></i> 24/7 customer support</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-container">
+                <div class="footer-column">
+                    <h3>Skywalker Travel</h3>
+                    <p style="margin-bottom: 20px; color: #ecf0f1; font-size: 14px;">
+                        The most trusted travel booking platform since 2010, offering the best prices and support.
+                    </p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Company</h3>
+                    <ul>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Press Center</a></li>
+                        <li><a href="#">Investor Relations</a></li>
+                        <li><a href="#">Partner Program</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Booking Policy</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li><a href="#">Travel Guides</a></li>
+                        <li><a href="#">Flight Status</a></li>
+                        <li><a href="#">Route Maps</a></li>
+                        <li><a href="#">Travel Blog</a></li>
+                        <li><a href="#">Travel Tips</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2024 Skywalker Travel. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

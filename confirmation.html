@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skywalker Travel - Booking Confirmation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --secondary-color: #5f6368;
+            --accent-color: #ff5722;
+            --light-gray: #f8f9fa;
+            --medium-gray: #e0e0e0;
+            --dark-gray: #5f6368;
+            --success-color: #34a853;
+            --font-main: 'Segoe UI', Arial, sans-serif;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: #333;
+            background-color: #f5f7fa;
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: white;
+            box-shadow: var(--box-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo i {
+            margin-right: 10px;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 25px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: var(--secondary-color);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover,
+        nav ul li a.active {
+            color: var(--primary-color);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background-color: white;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: var(--medium-gray);
+            z-index: 1;
+        }
+
+        .progress-step {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 25%;
+        }
+
+        .step-number {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background-color: white;
+            border: 2px solid var(--medium-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            font-weight: 600;
+            position: relative;
+            z-index: 2;
+        }
+
+        .progress-step.active .step-number,
+        .progress-step.completed .step-number {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .progress-step.completed .step-number {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .step-label {
+            font-size: 14px;
+            color: var(--dark-gray);
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .progress-step.active .step-label {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .progress-steps .bar {
+            position: absolute;
+            top: 15px;
+            left: 0;
+            height: 4px;
+            background-color: var(--primary-color);
+            z-index: 1;
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 40px 0;
+        }
+
+        /* Success Message */
+        .success-message {
+            background-color: var(--success-color);
+            color: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 40px;
+            box-shadow: var(--box-shadow);
+        }
+
+        .success-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        .success-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .success-text {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .booking-reference {
+            font-size: 16px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            padding: 12px 25px;
+            display: inline-block;
+            font-weight: 600;
+        }
+
+        /* Confirmation Container */
+        .confirmation-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        /* Booking Details */
+        .booking-details {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+
+        .booking-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .booking-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .e-ticket {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+
+        .flight-route {
+            padding: 30px 25px;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .route-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .route-date {
+            background-color: var(--light-gray);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-left: 15px;
+        }
+
+        .route-airports {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .airport {
+            text-align: center;
+            flex: 1;
+        }
+
+        .airport-code {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .airport-name {
+            font-size: 14px;
+            color: var(--secondary-color);
+        }
+
+        .flight-path {
+            flex: 2;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .flight-path-line {
+            width: 100%;
+            height: 2px;
+            background-color: var(--medium-gray);
+            position: relative;
+        }
+
+        .flight-path-line::before,
+        .flight-path-line::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            top: -3px;
+        }
+
+        .flight-path-line::before {
+            left: 0;
+        }
+
+        .flight-path-line::after {
+            right: 0;
+        }
+
+        .flight-type {
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--success-color);
+        }
+
+        .flight-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .flight-detail {
+            text-align: center;
+            background-color: var(--light-gray);
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            min-width: 120px;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: var(--secondary-color);
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .flight-timeline {
+            padding: 30px 25px;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .timeline-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+
+        .timeline {
+            display: flex;
+        }
+
+        .timeline-rail {
+            width: 30px;
+            position: relative;
+        }
+
+        .timeline-rail::before {
+            content: '';
+            position: absolute;
+            top: 30px;
+            bottom: 30px;
+            left: 14px;
+            width: 2px;
+            background-color: var(--primary-color);
+        }
+
+        .timeline-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: white;
+            border: 2px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timeline-dot i {
+            color: var(--primary-color);
+            font-size: 14px;
+        }
+
+        .timeline-content {
+            padding: 0 20px 40px 20px;
+            flex: 1;
+        }
+
+        .timeline-content:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-time {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .timeline-location {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .timeline-detail {
+            font-size: 14px;
+            color: var(--secondary-color);
+        }
+
+        .passenger-info {
+            padding: 30px 25px;
+        }
+
+        .passenger-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+
+        .passenger-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            padding: 20px;
+            background-color: var(--light-gray);
+            border-radius: var(--border-radius);
+        }
+
+        .passenger-details {
+            flex: 1;
+        }
+
+        .passenger-name {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .detail-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+
+        .detail-label {
+            color: var(--secondary-color);
+            width: 120px;
+        }
+
+        .passenger-qr {
+            background-color: white;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .qr-code {
+            width: 100px;
+            height: 100px;
+            background-color: var(--dark-gray);
+            margin: 0 auto 10px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-code i {
+            font-size: 40px;
+            color: white;
+        }
+
+        .qr-text {
+            font-size: 12px;
+            color: var(--secondary-color);
+        }
+
+        /* Next Steps */
+        .next-steps {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+            margin-bottom: 30px;
+            position: sticky;
+            top: 100px;
+        }
+
+        .steps-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+
+        .step-list {
+            list-style: none;
+        }
+
+        .step-item {
+            display: flex;
+            margin-bottom: 25px;
+        }
+
+        .step-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(26, 115, 232, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .step-icon i {
+            color: var(--primary-color);
+        }
+
+        .step-content h4 {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .step-text {
+            font-size: 14px;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1559b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--medium-gray);
+            color: var(--secondary-color);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        .btn-full {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        /* Share Section */
+        .share-section {
+            border-top: 1px solid var(--medium-gray);
+            margin-top: 25px;
+            padding-top: 25px;
+        }
+
+        .share-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .share-options {
+            display: flex;
+            gap: 10px;
+        }
+
+        .share-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--light-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .share-option:hover {
+            transform: translateY(-3px);
+        }
+
+        .share-option.email {
+            background-color: #ea4335;
+            color: white;
+        }
+
+        .share-option.whatsapp {
+            background-color: #25d366;
+            color: white;
+        }
+
+        .share-option.facebook {
+            background-color: #1877f2;
+            color: white;
+        }
+
+        .share-option.twitter {
+            background-color: #1da1f2;
+            color: white;
+        }
+
+        /* Additional Info */
+        .additional-info {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .additional-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .info-blocks {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .info-block {
+            border: 1px solid var(--medium-gray);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            transition: all 0.3s;
+        }
+
+        .info-block:hover {
+            box-shadow: var(--box-shadow);
+            border-color: var(--primary-color);
+        }
+
+        .info-icon {
+            color: var(--primary-color);
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .info-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .info-text {
+            font-size: 14px;
+            color: var(--secondary-color);
+        }
+
+        /* Footer */
+        footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 60px 0 30px;
+            margin-top: 60px;
+        }
+
+        .footer-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+        }
+
+        .footer-column h3 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 12px;
+        }
+
+        .footer-column ul li a {
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 14px;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--accent-color);
+            text-decoration: underline;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+
+        .social-icon:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .footer-bottom {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            font-size: 14px;
+            color: #bdc3c7;
+        }
+
+        @media (max-width: 992px) {
+            .confirmation-container {
+                grid-template-columns: 1fr;
+            }
+
+            .next-steps {
+                position: static;
+            }
+
+            .info-blocks {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .route-airports {
+                flex-direction: column;
+                gap: 30px;
+            }
+
+            .flight-path-line {
+                transform: rotate(90deg);
+                width: 40px;
+                margin: 15px 0;
+            }
+
+            .flight-info {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .flight-detail {
+                flex: 1 0 calc(50% - 10px);
+            }
+
+            .passenger-card {
+                flex-direction: column;
+            }
+
+            .passenger-qr {
+                margin-top: 20px;
+                width: 100%;
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .progress-steps {
+                display: none;
+            }
+
+            .mobile-progress {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .mobile-step {
+                font-size: 16px;
+                font-weight: 600;
+                color: var(--success-color);
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-progress {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-plane"></i> Skywalker Travel
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active">Flights</a></li>
+                    <li><a href="#">Hotels</a></li>
+                    <li><a href="#">Packages</a></li>
+                    <li><a href="#">Car Rentals</a></li>
+                    <li><a href="#">My Trips</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="container">
+            <div class="mobile-progress">
+                <span class="mobile-step">Step 4 of 4: Confirmation</span>
+                <span>100%</span>
+            </div>
+            <div class="progress-steps">
+                <div class="bar"></div>
+                <div class="progress-step completed">
+                    <div class="step-number">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="step-label">Flight Selection</div>
+                </div>
+                <div class="progress-step completed">
+                    <div class="step-number">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="step-label">Passenger Information</div>
+                </div>
+                <div class="progress-step completed">
+                    <div class="step-number">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="step-label">Payment</div>
+                </div>
+                <div class="progress-step active">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Confirmation</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Success Message -->
+            <div class="success-message">
+                <i class="fas fa-check-circle success-icon"></i>
+                <h1 class="success-title">Booking Confirmed!</h1>
+                <p class="success-text">Your flight ticket has been successfully booked and is ready to use.</p>
+                <div class="booking-reference">Booking Reference: SKYW54321</div>
+            </div>
+
+            <!-- Confirmation Container -->
+            <div class="confirmation-container">
+                <!-- Booking Details -->
+                <div class="booking-details">
+                    <div class="booking-header">
+                        <h2 class="booking-title">Flight Details</h2>
+                        <div class="e-ticket">E-Ticket: CA1234567</div>
+                    </div>
+
+                    <div class="flight-route">
+                        <div class="route-header">
+                            <h3>Outbound Flight</h3>
+                            <div class="route-date">October 15, 2024</div>
+                        </div>
+                        <div class="route-airports">
+                            <div class="airport">
+                                <div class="airport-code">PEK</div>
+                                <div class="airport-name">Beijing Capital Airport</div>
+                            </div>
+                            <div class="flight-path">
+                                <div class="flight-path-line"></div>
+                                <div class="flight-type">Nonstop</div>
+                            </div>
+                            <div class="airport">
+                                <div class="airport-code">SHA</div>
+                                <div class="airport-name">Shanghai Hongqiao Airport</div>
+                            </div>
+                        </div>
+                        <div class="flight-info">
+                            <div class="flight-detail">
+                                <div class="detail-label">Flight</div>
+                                <div class="detail-value">CA1234</div>
+                            </div>
+                            <div class="flight-detail">
+                                <div class="detail-label">Duration</div>
+                                <div class="detail-value">2h 15m</div>
+                            </div>
+                            <div class="flight-detail">
+                                <div class="detail-label">Aircraft</div>
+                                <div class="detail-value">Boeing 737-800</div>
+                            </div>
+                            <div class="flight-detail">
+                                <div class="detail-label">Class</div>
+                                <div class="detail-value">Economy</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flight-timeline">
+                        <h3 class="timeline-title">Flight Timeline</h3>
+                        <div class="timeline">
+                            <div class="timeline-rail">
+                                <div class="timeline-dot">
+                                    <i class="fas fa-plane-departure"></i>
+                                </div>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-time">09:25 AM, Oct 15</div>
+                                <div class="timeline-location">Beijing Capital Airport (PEK)</div>
+                                <div class="timeline-detail">Terminal 3, Gate C12</div>
+                            </div>
+                        </div>
+                        <div class="timeline">
+                            <div class="timeline-rail">
+                                <div class="timeline-dot">
+                                    <i class="fas fa-plane-arrival"></i>
+                                </div>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-time">11:40 AM, Oct 15</div>
+                                <div class="timeline-location">Shanghai Hongqiao Airport (SHA)</div>
+                                <div class="timeline-detail">Terminal 2, Baggage Claim 8</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="passenger-info">
+                        <h3 class="passenger-title">Passenger Information</h3>
+                        <div class="passenger-card">
+                            <div class="passenger-details">
+                                <div class="passenger-name">John Smith</div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Ticket Type:</div>
+                                    <div class="detail-value">Adult</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Passport Number:</div>
+                                    <div class="detail-value">P1234567</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Seat:</div>
+                                    <div class="detail-value">23A (Window)</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Check-in Opens:</div>
+                                    <div class="detail-value">Oct 14, 09:25 AM</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Baggage:</div>
+                                    <div class="detail-value">1 × 23kg (Checked), 1 × 7kg (Cabin)</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Special Meal:</div>
+                                    <div class="detail-value">Yes</div>
+                                </div>
+                            </div>
+                            <div class="passenger-qr">
+                                <div class="qr-code">
+                                    <i class="fas fa-qrcode"></i>
+                                </div>
+                                <div class="qr-text">Scan for mobile boarding pass</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Next Steps -->
+                <div class="next-steps">
+                    <h3 class="steps-title">Next Steps</h3>
+                    <ul class="step-list">
+                        <li class="step-item">
+                            <div class="step-icon">
+                                <i class="far fa-calendar-check"></i>
+                            </div>
+                            <div class="step-content">
+                                <h4>Add to Calendar</h4>
+                                <p class="step-text">Don't forget your flight. Add it to your calendar now.</p>
+                                <a href="#" class="btn btn-outline"><i class="fas fa-calendar-plus"></i> Add to
+                                    Calendar</a>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-icon">
+                                <i class="fas fa-check-square"></i>
+                            </div>
+                            <div class="step-content">
+                                <h4>Check-in Online</h4>
+                                <p class="step-text">Online check-in opens 24 hours before departure.</p>
+                                <a href="#" class="btn btn-outline"><i class="fas fa-laptop"></i> Check-in</a>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-icon">
+                                <i class="fas fa-hotel"></i>
+                            </div>
+                            <div class="step-content">
+                                <h4>Book a Hotel</h4>
+                                <p class="step-text">Complete your trip by booking a hotel in Shanghai.</p>
+                                <a href="#" class="btn btn-outline"><i class="fas fa-bed"></i> Find Hotels</a>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <div class="download-buttons">
+                        <a href="#" class="btn btn-primary"><i class="fas fa-download"></i> Download E-Ticket</a>
+                        <a href="#" class="btn btn-outline"><i class="fas fa-print"></i> Print</a>
+                    </div>
+
+                    <div class="share-section">
+                        <h4 class="share-title">Share your trip</h4>
+                        <div class="share-options">
+                            <a href="#" class="share-option email">
+                                <i class="fas fa-envelope"></i>
+                            </a>
+                            <a href="#" class="share-option whatsapp">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
+                            <a href="#" class="share-option facebook">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="#" class="share-option twitter">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <a href="#" class="btn btn-primary btn-full"><i class="fas fa-home"></i> Back to Home</a>
+                </div>
+            </div>
+
+            <!-- Additional Info -->
+            <div class="additional-info">
+                <h3 class="additional-title">Additional Information</h3>
+                <div class="info-blocks">
+                    <div class="info-block">
+                        <div class="info-icon">
+                            <i class="fas fa-suitcase"></i>
+                        </div>
+                        <h4 class="info-title">Baggage Information</h4>
+                        <p class="info-text">Each passenger is allowed one checked bag up to 23kg and one carry-on bag
+                            up to 7kg. Additional or overweight baggage will incur extra fees.</p>
+                    </div>
+                    <div class="info-block">
+                        <div class="info-icon">
+                            <i class="fas fa-passport"></i>
+                        </div>
+                        <h4 class="info-title">Travel Documents</h4>
+                        <p class="info-text">Please ensure you have all necessary travel documents, including passport,
+                            visa, and health declarations if required.</p>
+                    </div>
+                    <div class="info-block">
+                        <div class="info-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <h4 class="info-title">Change or Cancel</h4>
+                        <p class="info-text">Need to change your flight? You can manage your booking online up to 24
+                            hours before departure.</p>
+                    </div>
+                    <div class="info-block">
+                        <div class="info-icon">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                        <h4 class="info-title">Need Help?</h4>
+                        <p class="info-text">Our customer support team is available 24/7 to assist you with any
+                            questions or concerns.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-container">
+                <div class="footer-column">
+                    <h3>Skywalker Travel</h3>
+                    <p style="margin-bottom: 20px; color: #ecf0f1; font-size: 14px;">
+                        The most trusted travel booking platform since 2010, offering the best prices and support.
+                    </p>
+                    <div class="social-icons">
+                        <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Company</h3>
+                    <ul>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Press Center</a></li>
+                        <li><a href="#">Investor Relations</a></li>
+                        <li><a href="#">Partner Program</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Booking Policy</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li><a href="#">Travel Guides</a></li>
+                        <li><a href="#">Flight Status</a></li>
+                        <li><a href="#">Route Maps</a></li>
+                        <li><a href="#">Travel Blog</a></li>
+                        <li><a href="#">Travel Tips</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Skywalker Travel. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>
