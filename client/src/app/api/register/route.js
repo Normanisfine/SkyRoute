@@ -11,7 +11,7 @@ export async function POST(request) {
 
     // Check if user already exists
     const [existingUsers] = await db.query(
-      'SELECT * FROM User WHERE email = ? OR passport_number = ?',
+      'SELECT * FROM AirlineUser WHERE email = ? OR passport_number = ?',
       [email, passport_number]
     );
     
@@ -34,7 +34,7 @@ export async function POST(request) {
 
     // Insert new user
     const result = await db.query(
-      'INSERT INTO User (name, email, phone, passport_number, password) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO AirlineUser (name, email, phone, passport_number, password) VALUES (?, ?, ?, ?, ?)',
       [name, email, phone, passport_number, hashedPassword]
     );
     console.log('User inserted:', result);

@@ -9,7 +9,7 @@ export async function POST(request) {
   try {
     // Query database for user by email only
     const [users] = await db.query(
-      'SELECT * FROM User WHERE email = ?',
+      'SELECT * FROM AirlineUser WHERE email = ?',
       [email]
     );
 
