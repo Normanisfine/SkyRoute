@@ -79,21 +79,50 @@ const AdminPage = () => {
     const fetchData = async () => {
       try {
         console.log('Fetching data...');
-        const [airportsRes, airlinesRes, aircraftRes, flightsRes, seatsRes, pricesRes] = await Promise.all([
-          fetch('/api/admin/airports'),
-          fetch('/api/admin/airlines'),
-          fetch('/api/admin/aircraft'),
-          fetch('/api/admin/flights'),
-          fetch('/api/admin/seats'),
-          fetch('/api/admin/prices')
-        ]);
-
-        const airportsData = await airportsRes.json();
-        const airlinesData = await airlinesRes.json();
-        const aircraftData = await aircraftRes.json();
-        const flightsData = await flightsRes.json();
-        const seatsData = await seatsRes.json();
-        const pricesData = await pricesRes.json();
+        
+        // Function to handle API responses
+        const handleResponse = async (response) => {
+          if (response.status === 403) {
+            const error = await response.json();
+            alert(error.message || 'You do not have permission to access admin features');
+            // Redirect to home after showing error
+            window.location.href = '/';
+            return null;
+          }
+          
+          if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+          }
+          
+          return await response.json();
+        };
+        
+        // Make API requests
+        const airportsRes = await fetch('/api/admin/airports');
+        const airlinesRes = await fetch('/api/admin/airlines');
+        const aircraftRes = await fetch('/api/admin/aircraft');
+        const flightsRes = await fetch('/api/admin/flights');
+        const seatsRes = await fetch('/api/admin/seats');
+        const pricesRes = await fetch('/api/admin/prices');
+        
+        // Handle responses
+        const airportsData = await handleResponse(airportsRes);
+        if (!airportsData) return; // Stop if unauthorized
+        
+        const airlinesData = await handleResponse(airlinesRes);
+        if (!airlinesData) return;
+        
+        const aircraftData = await handleResponse(aircraftRes);
+        if (!aircraftData) return;
+        
+        const flightsData = await handleResponse(flightsRes);
+        if (!flightsData) return;
+        
+        const seatsData = await handleResponse(seatsRes);
+        if (!seatsData) return;
+        
+        const pricesData = await handleResponse(pricesRes);
+        if (!pricesData) return;
 
         console.log('Flights data received:', flightsData);
 
@@ -105,6 +134,7 @@ const AdminPage = () => {
         setPrices(pricesData);
       } catch (error) {
         console.error('Error fetching data:', error);
+        alert('Error loading admin data. Please try again later.');
       }
     };
 

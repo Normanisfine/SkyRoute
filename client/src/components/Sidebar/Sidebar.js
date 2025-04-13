@@ -1,11 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { PlaneTakeoff, ClipboardList, User } from 'lucide-react';
+import { PlaneTakeoff, ClipboardList, User, Shield } from 'lucide-react';
 
 export default function Sidebar() {
   const [activeIcon, setActiveIcon] = useState('home');
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Check if user is admin on component mount
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const response = await fetch('/api/user/role');
+        if (response.ok) {
+          const data = await response.json();
+          setIsAdmin(data.role === 'admin');
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+      }
+    };
+    
+    checkAdminStatus();
+  }, []);
   
   return (
     <div className="h-screen bg-gray-300 w-32 flex flex-col items-center pt-10">
@@ -42,6 +60,18 @@ export default function Sidebar() {
             <User/>
           </div>
         </Link>
+        
+        {/* Only show Admin link if user is admin */}
+        {isAdmin && (
+          <Link href="/admin">
+            <div 
+              className={`p-4 rounded-md cursor-pointer hover:bg-gray-200 ${activeIcon === 'admin' ? 'bg-white' : ''}`}
+              onClick={() => setActiveIcon('admin')}
+            >
+              <Shield/>
+            </div>
+          </Link>
+        )}
       </div>
     </div>
   );

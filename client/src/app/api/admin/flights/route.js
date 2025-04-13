@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import db from '@/utils/db';
+import { adminAuthMiddleware } from '@/utils/auth';
 
 export async function POST(request) {
+  // Check admin authorization
+  const authResponse = await adminAuthMiddleware(request);
+  if (authResponse) return authResponse;
+
   try {
     const {
       flightNumber,
@@ -51,7 +56,11 @@ export async function POST(request) {
   }
 }
 
-export async function GET() {
+export async function GET(request) {
+  // Check admin authorization
+  const authResponse = await adminAuthMiddleware(request);
+  if (authResponse) return authResponse;
+
   try {
     const query = `
       SELECT 
