@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react';
 
 const AdminPage = () => {
-  const [activeTab, setActiveTab] = useState('flights'); // 'flights', 'airports', 'airlines', 'seats', 'prices'
+  const [activeTab, setActiveTab] = useState('flights'); // 'flights', 'airports', 'airlines', 'seats', 'prices', 'aircraft'
   const [airports, setAirports] = useState([]);
   const [airlines, setAirlines] = useState([]);
   const [aircraft, setAircraft] = useState([]);
   const [flights, setFlights] = useState([]);
   const [seats, setSeats] = useState([]);
   const [prices, setPrices] = useState([]);
-  
+
   // Flight form data
   const [flightFormData, setFlightFormData] = useState({
     flightNumber: '',
@@ -63,6 +63,16 @@ const AdminPage = () => {
   const [seatView, setSeatView] = useState('add');
   const [priceView, setPriceView] = useState('add');
   const [editingItem, setEditingItem] = useState(null);
+
+  // Aircraft form data
+  const [aircraftFormData, setAircraftFormData] = useState({
+    model: '',
+    totalSeats: '',
+    airlineId: '',
+  });
+
+  // Aircraft view state
+  const [aircraftView, setAircraftView] = useState('add');
 
   // Fetch airports, airlines, and aircraft on component mount
   useEffect(() => {
@@ -233,7 +243,7 @@ const AdminPage = () => {
       setAvailableSeats([]);
       return;
     }
-    
+
     try {
       console.log('Fetching seats for flight:', flightId);
       const response = await fetch(`/api/admin/seats/${flightId}`);
@@ -303,7 +313,7 @@ const AdminPage = () => {
         });
 
         if (!response.ok) throw new Error('Failed to delete flight');
-        
+
         // Refresh flights data
         const updatedFlights = flights.filter(f => f.flight_id !== flightId);
         setFlights(updatedFlights);
@@ -346,7 +356,7 @@ const AdminPage = () => {
       }
 
       alert('Flight updated successfully!');
-      
+
       // Reset form and editing state
       setEditingItem(null);
       setFlightFormData({
@@ -359,12 +369,12 @@ const AdminPage = () => {
         airlineId: '',
         basicPrice: '',
       });
-      
+
       // Refresh flights data
       const flightsRes = await fetch('/api/admin/flights');
       const flightsData = await flightsRes.json();
       setFlights(flightsData);
-      
+
       // Switch back to manage view
       setFlightView('manage');
     } catch (error) {
@@ -451,6 +461,107 @@ const AdminPage = () => {
     }
   };
 
+  const handleAircraftSubmit = async (e) => {
+    e.preventDefault();
+    if (editingItem) {
+      // If we have an editingItem, we're updating
+      await handleUpdateAircraft(e);
+    } else {
+      // Add new aircraft
+      try {
+        const response = await fetch('/api/admin/aircraft', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(aircraftFormData),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to add aircraft');
+        }
+
+        alert('Aircraft added successfully!');
+        setAircraftFormData({
+          model: '',
+          totalSeats: '',
+          airlineId: '',
+        });
+
+        // Refresh aircraft data
+        const aircraftRes = await fetch('/api/admin/aircraft');
+        const aircraftData = await aircraftRes.json();
+        setAircraft(aircraftData);
+      } catch (error) {
+        console.error('Error adding aircraft:', error);
+        alert('Failed to add aircraft');
+      }
+    }
+  };
+
+  const handleEditAircraft = (aircraft) => {
+    setEditingItem(aircraft);
+    setAircraftFormData({
+      model: aircraft.model,
+      totalSeats: aircraft.total_seats.toString(),
+      airlineId: aircraft.airline_id.toString(),
+    });
+    setAircraftView('add');
+  };
+
+  const handleDeleteAircraft = async (aircraftId) => {
+    if (window.confirm('Are you sure you want to delete this aircraft?')) {
+      try {
+        const response = await fetch(`/api/admin/aircraft/${aircraftId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete aircraft');
+        setAircraft(aircraft.filter(a => a.aircraft_id !== aircraftId));
+      } catch (error) {
+        console.error('Error deleting aircraft:', error);
+        alert('Failed to delete aircraft');
+      }
+    }
+  };
+
+  const handleUpdateAircraft = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`/api/admin/aircraft/${editingItem.aircraft_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(aircraftFormData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update aircraft');
+      }
+
+      alert('Aircraft updated successfully!');
+
+      // Reset form and editing state
+      setEditingItem(null);
+      setAircraftFormData({
+        model: '',
+        totalSeats: '',
+        airlineId: '',
+      });
+
+      // Refresh aircraft data
+      const aircraftRes = await fetch('/api/admin/aircraft');
+      const aircraftData = await aircraftRes.json();
+      setAircraft(aircraftData);
+
+      // Switch back to manage view
+      setAircraftView('manage');
+    } catch (error) {
+      console.error('Error updating aircraft:', error);
+      alert('Failed to update aircraft');
+    }
+  };
+
   const tabStyle = (isActive) => ({
     padding: '12px 24px',
     backgroundColor: isActive ? '#0056b3' : '#f0f0f0',
@@ -483,7 +594,7 @@ const AdminPage = () => {
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
       <h1 style={{ marginBottom: '30px', color: '#333' }}>Admin Dashboard</h1>
-      
+
       <div style={{ marginBottom: '30px' }}>
         <button onClick={() => setActiveTab('flights')} style={tabStyle(activeTab === 'flights')}>
           Flights
@@ -493,6 +604,9 @@ const AdminPage = () => {
         </button>
         <button onClick={() => setActiveTab('airlines')} style={tabStyle(activeTab === 'airlines')}>
           Airlines
+        </button>
+        <button onClick={() => setActiveTab('aircraft')} style={tabStyle(activeTab === 'aircraft')}>
+          Aircraft
         </button>
         <button onClick={() => setActiveTab('seats')} style={tabStyle(activeTab === 'seats')}>
           Seats
@@ -505,14 +619,14 @@ const AdminPage = () => {
       {activeTab === 'flights' && (
         <div>
           <div style={{ marginBottom: '30px', display: 'flex', gap: '20px' }}>
-            <button 
-              onClick={() => setFlightView('add')} 
+            <button
+              onClick={() => setFlightView('add')}
               style={tabStyle(flightView === 'add')}
             >
               Add New Flight
             </button>
-            <button 
-              onClick={() => setFlightView('manage')} 
+            <button
+              onClick={() => setFlightView('manage')}
               style={tabStyle(flightView === 'manage')}
             >
               Manage Flights
@@ -520,7 +634,7 @@ const AdminPage = () => {
           </div>
 
           {flightView === 'add' ? (
-            <form onSubmit={handleFlightSubmit} style={{ 
+            <form onSubmit={handleFlightSubmit} style={{
               maxWidth: '600px',
               backgroundColor: '#f5f5f5',
               padding: '30px',
@@ -528,7 +642,7 @@ const AdminPage = () => {
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <h2 style={{ marginBottom: '20px', color: '#333' }}>Add New Flight</h2>
-              
+
               <div style={{ marginBottom: '20px' }}>
                 <label style={labelStyle}>Flight Number:</label>
                 <input
@@ -699,14 +813,14 @@ const AdminPage = () => {
               )}
             </form>
           ) : (
-            <div style={{ 
+            <div style={{
               backgroundColor: '#f5f5f5',
               padding: '30px',
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <h2 style={{ marginBottom: '20px', color: '#333' }}>Manage Flights</h2>
-              
+
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
@@ -766,14 +880,14 @@ const AdminPage = () => {
       {activeTab === 'airports' && (
         <div>
           <div style={{ marginBottom: '30px', display: 'flex', gap: '20px' }}>
-            <button 
-              onClick={() => setAirportView('add')} 
+            <button
+              onClick={() => setAirportView('add')}
               style={tabStyle(airportView === 'add')}
             >
               Add New Airport
             </button>
-            <button 
-              onClick={() => setAirportView('manage')} 
+            <button
+              onClick={() => setAirportView('manage')}
               style={tabStyle(airportView === 'manage')}
             >
               Manage Airports
@@ -781,7 +895,7 @@ const AdminPage = () => {
           </div>
 
           {airportView === 'add' ? (
-            <form onSubmit={handleAirportSubmit} style={{ 
+            <form onSubmit={handleAirportSubmit} style={{
               maxWidth: '600px',
               backgroundColor: '#f5f5f5',
               padding: '30px',
@@ -789,13 +903,13 @@ const AdminPage = () => {
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <h2 style={{ marginBottom: '20px', color: '#333' }}>Add New Airport</h2>
-              
+
               <div style={{ marginBottom: '20px' }}>
                 <label style={labelStyle}>Airport Name:</label>
                 <input
                   type="text"
                   value={airportFormData.airportName}
-                  onChange={(e) => setAirportFormData({...airportFormData, airportName: e.target.value})}
+                  onChange={(e) => setAirportFormData({ ...airportFormData, airportName: e.target.value })}
                   required
                   style={inputStyle}
                 />
@@ -806,7 +920,7 @@ const AdminPage = () => {
                 <input
                   type="text"
                   value={airportFormData.city}
-                  onChange={(e) => setAirportFormData({...airportFormData, city: e.target.value})}
+                  onChange={(e) => setAirportFormData({ ...airportFormData, city: e.target.value })}
                   required
                   style={inputStyle}
                 />
@@ -817,7 +931,7 @@ const AdminPage = () => {
                 <input
                   type="text"
                   value={airportFormData.country}
-                  onChange={(e) => setAirportFormData({...airportFormData, country: e.target.value})}
+                  onChange={(e) => setAirportFormData({ ...airportFormData, country: e.target.value })}
                   required
                   style={inputStyle}
                 />
@@ -828,7 +942,7 @@ const AdminPage = () => {
                 <input
                   type="text"
                   value={airportFormData.iataCode}
-                  onChange={(e) => setAirportFormData({...airportFormData, iataCode: e.target.value})}
+                  onChange={(e) => setAirportFormData({ ...airportFormData, iataCode: e.target.value })}
                   required
                   maxLength="3"
                   style={inputStyle}
@@ -840,7 +954,7 @@ const AdminPage = () => {
                 <input
                   type="text"
                   value={airportFormData.icaoCode}
-                  onChange={(e) => setAirportFormData({...airportFormData, icaoCode: e.target.value})}
+                  onChange={(e) => setAirportFormData({ ...airportFormData, icaoCode: e.target.value })}
                   required
                   maxLength="4"
                   style={inputStyle}
@@ -862,14 +976,14 @@ const AdminPage = () => {
               </button>
             </form>
           ) : (
-            <div style={{ 
+            <div style={{
               backgroundColor: '#f5f5f5',
               padding: '30px',
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <h2 style={{ marginBottom: '20px', color: '#333' }}>Manage Airports</h2>
-              
+
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
@@ -915,14 +1029,14 @@ const AdminPage = () => {
       {activeTab === 'airlines' && (
         <div>
           <div style={{ marginBottom: '30px', display: 'flex', gap: '20px' }}>
-            <button 
-              onClick={() => setAirlineView('add')} 
+            <button
+              onClick={() => setAirlineView('add')}
               style={tabStyle(airlineView === 'add')}
             >
               Add New Airline
             </button>
-            <button 
-              onClick={() => setAirlineView('manage')} 
+            <button
+              onClick={() => setAirlineView('manage')}
               style={tabStyle(airlineView === 'manage')}
             >
               Manage Airlines
@@ -930,7 +1044,7 @@ const AdminPage = () => {
           </div>
 
           {airlineView === 'add' ? (
-            <form onSubmit={handleAirlineSubmit} style={{ 
+            <form onSubmit={handleAirlineSubmit} style={{
               maxWidth: '600px',
               backgroundColor: '#f5f5f5',
               padding: '30px',
@@ -938,13 +1052,13 @@ const AdminPage = () => {
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <h2 style={{ marginBottom: '20px', color: '#333' }}>Add New Airline</h2>
-              
+
               <div style={{ marginBottom: '20px' }}>
                 <label style={labelStyle}>Airline Name:</label>
                 <input
                   type="text"
                   value={airlineFormData.airlineName}
-                  onChange={(e) => setAirlineFormData({...airlineFormData, airlineName: e.target.value})}
+                  onChange={(e) => setAirlineFormData({ ...airlineFormData, airlineName: e.target.value })}
                   required
                   style={inputStyle}
                 />
@@ -955,7 +1069,7 @@ const AdminPage = () => {
                 <input
                   type="text"
                   value={airlineFormData.country}
-                  onChange={(e) => setAirlineFormData({...airlineFormData, country: e.target.value})}
+                  onChange={(e) => setAirlineFormData({ ...airlineFormData, country: e.target.value })}
                   required
                   style={inputStyle}
                 />
@@ -976,14 +1090,14 @@ const AdminPage = () => {
               </button>
             </form>
           ) : (
-            <div style={{ 
+            <div style={{
               backgroundColor: '#f5f5f5',
               padding: '30px',
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <h2 style={{ marginBottom: '20px', color: '#333' }}>Manage Airlines</h2>
-              
+
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
@@ -1020,17 +1134,179 @@ const AdminPage = () => {
         </div>
       )}
 
+      {activeTab === 'aircraft' && (
+        <div>
+          <div style={{ marginBottom: '30px', display: 'flex', gap: '20px' }}>
+            <button
+              onClick={() => setAircraftView('add')}
+              style={tabStyle(aircraftView === 'add')}
+            >
+              Add New Aircraft
+            </button>
+            <button
+              onClick={() => setAircraftView('manage')}
+              style={tabStyle(aircraftView === 'manage')}
+            >
+              Manage Aircraft
+            </button>
+          </div>
+
+          {aircraftView === 'add' ? (
+            <form onSubmit={handleAircraftSubmit} style={{
+              maxWidth: '600px',
+              backgroundColor: '#f5f5f5',
+              padding: '30px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}>
+              <h2 style={{ marginBottom: '20px', color: '#333' }}>
+                {editingItem ? 'Edit Aircraft' : 'Add New Aircraft'}
+              </h2>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={labelStyle}>Model:</label>
+                <input
+                  type="text"
+                  value={aircraftFormData.model}
+                  onChange={(e) => setAircraftFormData({ ...aircraftFormData, model: e.target.value })}
+                  required
+                  style={inputStyle}
+                  placeholder="e.g., Boeing 737-800"
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={labelStyle}>Total Seats:</label>
+                <input
+                  type="number"
+                  value={aircraftFormData.totalSeats}
+                  onChange={(e) => setAircraftFormData({ ...aircraftFormData, totalSeats: e.target.value })}
+                  required
+                  min="1"
+                  style={inputStyle}
+                  placeholder="e.g., 180"
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={labelStyle}>Airline:</label>
+                <select
+                  value={aircraftFormData.airlineId}
+                  onChange={(e) => setAircraftFormData({ ...aircraftFormData, airlineId: e.target.value })}
+                  required
+                  style={inputStyle}
+                >
+                  <option value="">Select Airline</option>
+                  {airlines.map(airline => (
+                    <option key={airline.airline_id} value={airline.airline_id}>
+                      {airline.airline_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button type="submit" style={{
+                padding: '12px 24px',
+                backgroundColor: '#0056b3',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                width: '100%'
+              }}>
+                {editingItem ? 'Update Aircraft' : 'Add Aircraft'}
+              </button>
+
+              {editingItem && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingItem(null);
+                    setAircraftFormData({
+                      model: '',
+                      totalSeats: '',
+                      airlineId: '',
+                    });
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    width: '100%',
+                    marginTop: '10px'
+                  }}
+                >
+                  Cancel Edit
+                </button>
+              )}
+            </form>
+          ) : (
+            <div style={{
+              backgroundColor: '#f5f5f5',
+              padding: '30px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}>
+              <h2 style={{ marginBottom: '20px', color: '#333' }}>Manage Aircraft</h2>
+
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Model</th>
+                    <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Total Seats</th>
+                    <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Airline</th>
+                    <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {aircraft.map(aircraftItem => (
+                    <tr key={aircraftItem.aircraft_id}>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{aircraftItem.model}</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{aircraftItem.total_seats}</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        {airlines.find(a => a.airline_id === aircraftItem.airline_id)?.airline_name || 'Unknown'}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        <button
+                          onClick={() => handleEditAircraft(aircraftItem)}
+                          style={{ marginRight: '10px', padding: '5px 10px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '3px' }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAircraft(aircraftItem.aircraft_id)}
+                          style={{ padding: '5px 10px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '3px' }}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {activeTab === 'seats' && (
         <div>
           <div style={{ marginBottom: '30px', display: 'flex', gap: '20px' }}>
-            <button 
-              onClick={() => setSeatView('add')} 
+            <button
+              onClick={() => setSeatView('add')}
               style={tabStyle(seatView === 'add')}
             >
               Add New Seat
             </button>
-            <button 
-              onClick={() => setSeatView('manage')} 
+            <button
+              onClick={() => setSeatView('manage')}
               style={tabStyle(seatView === 'manage')}
             >
               Manage Seats
@@ -1038,7 +1314,7 @@ const AdminPage = () => {
           </div>
 
           {seatView === 'add' ? (
-            <form onSubmit={handleSeatSubmit} style={{ 
+            <form onSubmit={handleSeatSubmit} style={{
               maxWidth: '600px',
               backgroundColor: '#f5f5f5',
               padding: '30px',
@@ -1046,12 +1322,12 @@ const AdminPage = () => {
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <h2 style={{ marginBottom: '20px', color: '#333' }}>Add New Seat</h2>
-              
+
               <div style={{ marginBottom: '20px' }}>
                 <label style={labelStyle}>Aircraft:</label>
                 <select
                   value={seatFormData.aircraftId}
-                  onChange={(e) => setSeatFormData({...seatFormData, aircraftId: e.target.value})}
+                  onChange={(e) => setSeatFormData({ ...seatFormData, aircraftId: e.target.value })}
                   required
                   style={inputStyle}
                 >
@@ -1069,7 +1345,7 @@ const AdminPage = () => {
                 <input
                   type="text"
                   value={seatFormData.seatNumber}
-                  onChange={(e) => setSeatFormData({...seatFormData, seatNumber: e.target.value})}
+                  onChange={(e) => setSeatFormData({ ...seatFormData, seatNumber: e.target.value })}
                   required
                   placeholder="e.g., 12A"
                   maxLength="4"
@@ -1081,7 +1357,7 @@ const AdminPage = () => {
                 <label style={labelStyle}>Class Type:</label>
                 <select
                   value={seatFormData.classType}
-                  onChange={(e) => setSeatFormData({...seatFormData, classType: e.target.value})}
+                  onChange={(e) => setSeatFormData({ ...seatFormData, classType: e.target.value })}
                   required
                   style={inputStyle}
                 >
@@ -1106,14 +1382,14 @@ const AdminPage = () => {
               </button>
             </form>
           ) : (
-            <div style={{ 
+            <div style={{
               backgroundColor: '#f5f5f5',
               padding: '30px',
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <h2 style={{ marginBottom: '20px', color: '#333' }}>Manage Seats</h2>
-              
+
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
@@ -1157,14 +1433,14 @@ const AdminPage = () => {
       {activeTab === 'prices' && (
         <div>
           <div style={{ marginBottom: '30px', display: 'flex', gap: '20px' }}>
-            <button 
-              onClick={() => setPriceView('add')} 
+            <button
+              onClick={() => setPriceView('add')}
               style={tabStyle(priceView === 'add')}
             >
               Add New Price
             </button>
-            <button 
-              onClick={() => setPriceView('manage')} 
+            <button
+              onClick={() => setPriceView('manage')}
               style={tabStyle(priceView === 'manage')}
             >
               Manage Prices
@@ -1172,7 +1448,7 @@ const AdminPage = () => {
           </div>
 
           {priceView === 'add' ? (
-            <form onSubmit={handlePriceSubmit} style={{ 
+            <form onSubmit={handlePriceSubmit} style={{
               maxWidth: '600px',
               backgroundColor: '#f5f5f5',
               padding: '30px',
@@ -1180,7 +1456,7 @@ const AdminPage = () => {
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <h2 style={{ marginBottom: '20px', color: '#333' }}>Add New Price</h2>
-              
+
               <div style={{ marginBottom: '20px' }}>
                 <label style={labelStyle}>Flight:</label>
                 <select
@@ -1214,7 +1490,7 @@ const AdminPage = () => {
                 <label style={labelStyle}>Seat:</label>
                 <select
                   value={priceFormData.seatId}
-                  onChange={(e) => setPriceFormData({...priceFormData, seatId: e.target.value})}
+                  onChange={(e) => setPriceFormData({ ...priceFormData, seatId: e.target.value })}
                   required
                   style={inputStyle}
                   disabled={!priceFormData.flightId}
@@ -1233,7 +1509,7 @@ const AdminPage = () => {
                 <input
                   type="number"
                   value={priceFormData.premiumPrice}
-                  onChange={(e) => setPriceFormData({...priceFormData, premiumPrice: e.target.value})}
+                  onChange={(e) => setPriceFormData({ ...priceFormData, premiumPrice: e.target.value })}
                   required
                   min="0"
                   step="0.01"
@@ -1245,7 +1521,7 @@ const AdminPage = () => {
                 <label style={labelStyle}>Status:</label>
                 <select
                   value={priceFormData.status}
-                  onChange={(e) => setPriceFormData({...priceFormData, status: e.target.value})}
+                  onChange={(e) => setPriceFormData({ ...priceFormData, status: e.target.value })}
                   required
                   style={inputStyle}
                 >
@@ -1269,14 +1545,14 @@ const AdminPage = () => {
               </button>
             </form>
           ) : (
-            <div style={{ 
+            <div style={{
               backgroundColor: '#f5f5f5',
               padding: '30px',
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <h2 style={{ marginBottom: '20px', color: '#333' }}>Manage Prices</h2>
-              
+
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
