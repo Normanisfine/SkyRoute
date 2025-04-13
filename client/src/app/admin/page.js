@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 
 const AdminPage = () => {
-  const [activeTab, setActiveTab] = useState('flights'); // 'flights', 'airports', 'airlines', 'seats', 'prices'
+  const [activeTab, setActiveTab] = useState('flights'); // 'flights', 'airports', 'airlines', 'seats', 'prices', 'aircraft'
   const [airports, setAirports] = useState([]);
   const [airlines, setAirlines] = useState([]);
   const [aircraft, setAircraft] = useState([]);
@@ -68,6 +68,16 @@ const AdminPage = () => {
   const [seatView, setSeatView] = useState('add');
   const [priceView, setPriceView] = useState('add');
   const [editingItem, setEditingItem] = useState(null);
+
+  // Aircraft form data
+  const [aircraftFormData, setAircraftFormData] = useState({
+    model: '',
+    totalSeats: '',
+    airlineId: '',
+  });
+
+  // Aircraft view state
+  const [aircraftView, setAircraftView] = useState('add');
 
   // Fetch airports, airlines, and aircraft on component mount
   useEffect(() => {
@@ -483,6 +493,107 @@ const AdminPage = () => {
         console.error('Error deleting price:', error);
         alert('Failed to delete price');
       }
+    }
+  };
+
+  const handleAircraftSubmit = async (e) => {
+    e.preventDefault();
+    if (editingItem) {
+      // If we have an editingItem, we're updating
+      await handleUpdateAircraft(e);
+    } else {
+      // Add new aircraft
+      try {
+        const response = await fetch('/api/admin/aircraft', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(aircraftFormData),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to add aircraft');
+        }
+
+        alert('Aircraft added successfully!');
+        setAircraftFormData({
+          model: '',
+          totalSeats: '',
+          airlineId: '',
+        });
+
+        // Refresh aircraft data
+        const aircraftRes = await fetch('/api/admin/aircraft');
+        const aircraftData = await aircraftRes.json();
+        setAircraft(aircraftData);
+      } catch (error) {
+        console.error('Error adding aircraft:', error);
+        alert('Failed to add aircraft');
+      }
+    }
+  };
+
+  const handleEditAircraft = (aircraft) => {
+    setEditingItem(aircraft);
+    setAircraftFormData({
+      model: aircraft.model,
+      totalSeats: aircraft.total_seats.toString(),
+      airlineId: aircraft.airline_id.toString(),
+    });
+    setAircraftView('add');
+  };
+
+  const handleDeleteAircraft = async (aircraftId) => {
+    if (window.confirm('Are you sure you want to delete this aircraft?')) {
+      try {
+        const response = await fetch(`/api/admin/aircraft/${aircraftId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete aircraft');
+        setAircraft(aircraft.filter(a => a.aircraft_id !== aircraftId));
+      } catch (error) {
+        console.error('Error deleting aircraft:', error);
+        alert('Failed to delete aircraft');
+      }
+    }
+  };
+
+  const handleUpdateAircraft = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`/api/admin/aircraft/${editingItem.aircraft_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(aircraftFormData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update aircraft');
+      }
+
+      alert('Aircraft updated successfully!');
+
+      // Reset form and editing state
+      setEditingItem(null);
+      setAircraftFormData({
+        model: '',
+        totalSeats: '',
+        airlineId: '',
+      });
+
+      // Refresh aircraft data
+      const aircraftRes = await fetch('/api/admin/aircraft');
+      const aircraftData = await aircraftRes.json();
+      setAircraft(aircraftData);
+
+      // Switch back to manage view
+      setAircraftView('manage');
+    } catch (error) {
+      console.error('Error updating aircraft:', error);
+      alert('Failed to update aircraft');
     }
   };
 
@@ -1044,6 +1155,168 @@ const AdminPage = () => {
                         </button>
                         <button
                           onClick={() => handleDeleteAirline(airline.airline_id)}
+                          style={{ padding: '5px 10px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '3px' }}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'aircraft' && (
+        <div>
+          <div style={{ marginBottom: '30px', display: 'flex', gap: '20px' }}>
+            <button
+              onClick={() => setAircraftView('add')}
+              style={tabStyle(aircraftView === 'add')}
+            >
+              Add New Aircraft
+            </button>
+            <button
+              onClick={() => setAircraftView('manage')}
+              style={tabStyle(aircraftView === 'manage')}
+            >
+              Manage Aircraft
+            </button>
+          </div>
+
+          {aircraftView === 'add' ? (
+            <form onSubmit={handleAircraftSubmit} style={{
+              maxWidth: '600px',
+              backgroundColor: '#f5f5f5',
+              padding: '30px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}>
+              <h2 style={{ marginBottom: '20px', color: '#333' }}>
+                {editingItem ? 'Edit Aircraft' : 'Add New Aircraft'}
+              </h2>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={labelStyle}>Model:</label>
+                <input
+                  type="text"
+                  value={aircraftFormData.model}
+                  onChange={(e) => setAircraftFormData({ ...aircraftFormData, model: e.target.value })}
+                  required
+                  style={inputStyle}
+                  placeholder="e.g., Boeing 737-800"
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={labelStyle}>Total Seats:</label>
+                <input
+                  type="number"
+                  value={aircraftFormData.totalSeats}
+                  onChange={(e) => setAircraftFormData({ ...aircraftFormData, totalSeats: e.target.value })}
+                  required
+                  min="1"
+                  style={inputStyle}
+                  placeholder="e.g., 180"
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={labelStyle}>Airline:</label>
+                <select
+                  value={aircraftFormData.airlineId}
+                  onChange={(e) => setAircraftFormData({ ...aircraftFormData, airlineId: e.target.value })}
+                  required
+                  style={inputStyle}
+                >
+                  <option value="">Select Airline</option>
+                  {airlines.map(airline => (
+                    <option key={airline.airline_id} value={airline.airline_id}>
+                      {airline.airline_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button type="submit" style={{
+                padding: '12px 24px',
+                backgroundColor: '#0056b3',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                width: '100%'
+              }}>
+                {editingItem ? 'Update Aircraft' : 'Add Aircraft'}
+              </button>
+
+              {editingItem && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingItem(null);
+                    setAircraftFormData({
+                      model: '',
+                      totalSeats: '',
+                      airlineId: '',
+                    });
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    width: '100%',
+                    marginTop: '10px'
+                  }}
+                >
+                  Cancel Edit
+                </button>
+              )}
+            </form>
+          ) : (
+            <div style={{
+              backgroundColor: '#f5f5f5',
+              padding: '30px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}>
+              <h2 style={{ marginBottom: '20px', color: '#333' }}>Manage Aircraft</h2>
+
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Model</th>
+                    <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Total Seats</th>
+                    <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Airline</th>
+                    <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {aircraft.map(aircraftItem => (
+                    <tr key={aircraftItem.aircraft_id}>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{aircraftItem.model}</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{aircraftItem.total_seats}</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        {airlines.find(a => a.airline_id === aircraftItem.airline_id)?.airline_name || 'Unknown'}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        <button
+                          onClick={() => handleEditAircraft(aircraftItem)}
+                          style={{ marginRight: '10px', padding: '5px 10px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '3px' }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAircraft(aircraftItem.aircraft_id)}
                           style={{ padding: '5px 10px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '3px' }}
                         >
                           Delete
