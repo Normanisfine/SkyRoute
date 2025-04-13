@@ -177,26 +177,26 @@ CREATE TABLE Saved_Flights (
 
 -- Insert data into AirlineUser table (renamed from User)
 INSERT INTO AirlineUser (password, name, email, phone, passport_number, role) VALUES
-('hashed_pwd1', 'John Smith', 'john.smith@email.com', '+1-555-123-4567', 'US123456', 'customer'),
-('hashed_pwd2', 'Emma Johnson', 'emma.johnson@email.com', '+1-555-234-5678', 'US234567', 'customer'),
-('hashed_pwd3', 'Michael Brown', 'michael.brown@email.com', '+1-555-345-6789', 'US345678', 'customer'),
-('hashed_pwd4', 'Olivia Davis', 'olivia.davis@email.com', '+1-555-456-7890', 'US456789', 'customer'),
-('hashed_pwd5', 'William Wilson', 'william.wilson@email.com', '+1-555-567-8901', 'US567890', 'customer'),
-('hashed_pwd6', 'Sophia Martinez', 'sophia.martinez@email.com', '+1-555-678-9012', 'US678901', 'customer'),
-('hashed_pwd7', 'James Anderson', 'james.anderson@email.com', '+1-555-789-0123', 'US789012', 'customer'),
-('hashed_pwd8', 'Isabella Thomas', 'isabella.thomas@email.com', '+1-555-890-1234', 'US890123', 'customer'),
-('hashed_pwd9', 'Alexander White', 'alexander.white@email.com', '+1-555-901-2345', 'US901234', 'customer'),
-('hashed_pwd10', 'Charlotte Harris', 'charlotte.harris@email.com', '+1-555-012-3456', 'US012345', 'customer'),
-('hashed_pwd11', 'Daniel Clark', 'daniel.clark@email.com', '+44-20-1234-5678', 'UK123456', 'customer'),
-('hashed_pwd12', 'Mia Lewis', 'mia.lewis@email.com', '+44-20-2345-6789', 'UK234567', 'customer'),
-('hashed_pwd13', 'Ethan Lee', 'ethan.lee@email.com', '+86-10-1234-5678', 'CN123456', 'customer'),
-('hashed_pwd14', 'Amelia Walker', 'amelia.walker@email.com', '+86-10-2345-6789', 'CN234567', 'customer'),
-('hashed_pwd15', 'Benjamin Hall', 'benjamin.hall@email.com', '+33-1-2345-6789', 'FR123456', 'customer'),
-('hashed_pwd16', 'Harper Young', 'harper.young@email.com', '+33-1-3456-7890', 'FR234567', 'customer'),
-('hashed_pwd17', 'Lucas King', 'lucas.king@email.com', '+49-30-1234-5678', 'DE123456', 'customer'),
-('hashed_pwd18', 'Evelyn Wright', 'evelyn.wright@email.com', '+49-30-2345-6789', 'DE234567', 'customer'),
-('hashed_admin1', 'Admin User1', 'admin1@airline.com', '+1-555-111-0000', 'AD000001', 'admin'),
-('hashed_admin2', 'Admin User2', 'admin2@airline.com', '+1-555-222-0000', 'AD000002', 'admin');
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'John Smith', 'john.smith@email.com', '+1-555-123-4567', 'US123456', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Emma Johnson', 'emma.johnson@email.com', '+1-555-234-5678', 'US234567', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Michael Brown', 'michael.brown@email.com', '+1-555-345-6789', 'US345678', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Olivia Davis', 'olivia.davis@email.com', '+1-555-456-7890', 'US456789', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'William Wilson', 'william.wilson@email.com', '+1-555-567-8901', 'US567890', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Sophia Martinez', 'sophia.martinez@email.com', '+1-555-678-9012', 'US678901', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'James Anderson', 'james.anderson@email.com', '+1-555-789-0123', 'US789012', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Isabella Thomas', 'isabella.thomas@email.com', '+1-555-890-1234', 'US890123', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Alexander White', 'alexander.white@email.com', '+1-555-901-2345', 'US901234', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Charlotte Harris', 'charlotte.harris@email.com', '+1-555-012-3456', 'US012345', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Daniel Clark', 'daniel.clark@email.com', '+44-20-1234-5678', 'UK123456', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Mia Lewis', 'mia.lewis@email.com', '+44-20-2345-6789', 'UK234567', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Ethan Lee', 'ethan.lee@email.com', '+86-10-1234-5678', 'CN123456', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Amelia Walker', 'amelia.walker@email.com', '+86-10-2345-6789', 'CN234567', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Benjamin Hall', 'benjamin.hall@email.com', '+33-1-2345-6789', 'FR123456', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Harper Young', 'harper.young@email.com', '+33-1-3456-7890', 'FR234567', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Lucas King', 'lucas.king@email.com', '+49-30-1234-5678', 'DE123456', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Evelyn Wright', 'evelyn.wright@email.com', '+49-30-2345-6789', 'DE234567', 'customer'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Admin User1', 'admin1@airline.com', '+1-555-111-0000', 'AD000001', 'admin'),
+('$2b$10$l3AHeYEQfNKHqB4gxMBiO.tNRHdSlTq.nl8zEOF.32wbR.k5dy1oq', 'Admin User2', 'admin2@airline.com', '+1-555-222-0000', 'AD000002', 'admin');
 
 -- Insert data into Airport table
 INSERT INTO Airport (airport_name, city, country, iata_code, icao_code) VALUES
