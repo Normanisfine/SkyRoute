@@ -18,20 +18,20 @@ export async function POST(request) {
     }
 
     const user = users[0];
-    
+
     // Compare password hash
     const passwordMatch = await bcrypt.compare(password, user.password);
-    
+
     if (!passwordMatch) {
       return Response.json({ message: 'Invalid email or password' }, { status: 401 });
     }
 
     // Set authentication cookie
-    cookies().set('auth', JSON.stringify({ 
+    cookies().set('auth', JSON.stringify({
       id: user.user_id,
       email: user.email,
       name: user.name
-    }), { 
+    }), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 7, // 1 week
