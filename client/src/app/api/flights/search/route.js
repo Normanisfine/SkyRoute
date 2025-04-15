@@ -13,7 +13,7 @@ export async function GET(request) {
             return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
         }
 
-        // Modified query to search flights within date range
+        // Modified query to properly check seat availability from Price table
         const [rows] = await db.execute(`
             SELECT 
                 f.flight_id as id,
@@ -27,7 +27,9 @@ export async function GET(request) {
                 arr.city as destinationCity,
                 al.airline_name as airline,
                 fs.status as flightStatus,
-                COUNT(DISTINCT CASE WHEN p.status = 'Available' THEN p.price_id END) as availableSeats
+                s.class_type as seatClass,
+                COUNT(DISTINCT CASE WHEN p.status = 'Available' THEN p.price_id END) as availableSeats,
+                MIN(CASE WHEN p.status = 'Available' THEN p.premium_price END) as lowestPrice
             FROM 
                 Flight f
                 JOIN Airport dep ON f.departure_airport_id = dep.airport_id
@@ -35,18 +37,31 @@ export async function GET(request) {
                 JOIN Airline al ON f.airline_id = al.airline_id
                 LEFT JOIN Flight_Status fs ON f.flight_id = fs.flight_id
                 LEFT JOIN Price p ON f.flight_id = p.flight_id
+                LEFT JOIN Seat s ON p.seat_id = s.seat_id
             WHERE 
                 (dep.iata_code = ? OR LOWER(dep.city) = LOWER(?))
                 AND (arr.iata_code = ? OR LOWER(arr.city) = LOWER(?))
                 AND DATE(f.departure_time) >= ?
                 ${returnDate ? 'AND DATE(f.departure_time) <= ?' : ''}
                 AND fs.status != 'Cancelled'
+                AND p.status = 'Available'
             GROUP BY 
-                f.flight_id
+                f.flight_id,
+                f.flight_number,
+                f.departure_time,
+                f.arrival_time,
+                f.basic_price,
+                dep.iata_code,
+                dep.city,
+                arr.iata_code,
+                arr.city,
+                al.airline_name,
+                fs.status,
+                s.class_type
             HAVING 
                 availableSeats > 0
             ORDER BY 
-                f.departure_time
+                f.departure_time, lowestPrice
         `, returnDate 
            ? [originInput, originInput, destinationInput, destinationInput, departDate, returnDate]
            : [originInput, originInput, destinationInput, destinationInput, departDate]
@@ -61,27 +76,15 @@ export async function GET(request) {
             originCity: row.originCity,
             destination: row.destination,
             destinationCity: row.destinationCity,
-            departureTime: new Date(row.departureDateTime).toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true
-            }).toLowerCase(),
-            arrivalTime: new Date(row.arrivalDateTime).toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true
-            }).toLowerCase(),
-            departureDate: new Date(row.departureDateTime).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            }),
-            duration: calculateDuration(row.departureDateTime, row.arrivalDateTime),
-            price: row.basePrice,
-            date: new Date(row.departureDateTime).toISOString().split('T')[0],
-            stops: 0,
+            departureDateTime: row.departureDateTime,
+            arrivalDateTime: row.arrivalDateTime,
+            departureTime: row.departureDateTime,
+            arrivalTime: row.arrivalDateTime,
+            basePrice: parseFloat(row.basePrice),
+            lowestPrice: row.lowestPrice ? parseFloat(row.lowestPrice) : parseFloat(row.basePrice),
             status: row.flightStatus,
-            availableSeats: row.availableSeats
+            availableSeats: parseInt(row.availableSeats),
+            seatClass: row.seatClass
         }));
 
         return NextResponse.json(flights);

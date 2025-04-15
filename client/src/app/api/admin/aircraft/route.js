@@ -1,36 +1,18 @@
 import { NextResponse } from 'next/server';
-import mysql from 'mysql2/promise';
-
-// 数据库连接配置
-const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'skyroute',
-};
+import db from '@/utils/db';
 
 // GET - 获取所有航空器
 export async function GET() {
   try {
-    const connection = await mysql.createConnection(dbConfig);
-
-    // 获取航空器数据，包括关联的航空公司信息
-    const [rows] = await connection.execute(`
+    const [rows] = await db.execute(`
       SELECT a.*, al.airline_name 
       FROM Aircraft a
       LEFT JOIN Airline al ON a.airline_id = al.airline_id
-      ORDER BY a.aircraft_id DESC
     `);
-
-    await connection.end();
-
     return NextResponse.json(rows);
   } catch (error) {
     console.error('Error fetching aircraft:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch aircraft data' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
