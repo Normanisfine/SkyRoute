@@ -187,35 +187,266 @@ const ProfilePage = () => {
         });
     };
 
-    const handleInputChange = (e, formSetter) => {
-        const { name, value } = e.target;
-        formSetter(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
 
-    const handleRemoveSavedFlight = (id) => {
-        // 在实际应用中，这里会发送API请求删除保存的航班
-        // 这里简单模拟删除
-        setSavedFlights(savedFlights.filter(flight => flight.id !== id));
-    };
+    fetchUserData();
+  }, []);
 
-    return (
-        <div className="min-h-screen bg-slate-50">
-            {/* 导航栏 */}
-            <nav className="bg-white shadow-sm">
-                <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-                    <Link href="/" className="text-2xl font-bold text-blue-600 flex items-center">
-                        <span className="font-black">Sk.</span>
-                    </Link>
-                    <div className="flex items-center space-x-6">
-                        <Link href="/flights" className="text-gray-600 hover:text-blue-600 font-medium">Flights</Link>
-                        <Link href="/bookings" className="text-gray-600 hover:text-blue-600 font-medium">My Orders</Link>
-                        <Link href="/profile" className="text-blue-600">
-                            <UserIcon />
-                        </Link>
-                    </div>
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    // 在实际应用中，这里会发送API请求更新用户信息
+    // 这里简单模拟更新
+    setUser({
+      ...user,
+      name: editForm.name,
+      email: editForm.email,
+      phone: editForm.phone,
+      passport_number: editForm.passport_number
+    });
+    setIsEditing(false);
+  };
+
+  const handleAddPassenger = (e) => {
+    e.preventDefault();
+    // 在实际应用中，这里会发送API请求添加乘客
+    // 这里简单模拟添加
+    const newId = passengers.length > 0 ? Math.max(...passengers.map(p => p.id)) + 1 : 1;
+    setPassengers([
+      ...passengers,
+      {
+        id: newId,
+        ...newPassenger
+      }
+    ]);
+    // 重置表单
+    setNewPassenger({
+      name: '',
+      passport_number: '',
+      dob: ''
+    });
+  };
+
+  const handleInputChange = (e, formSetter) => {
+    const { name, value } = e.target;
+    formSetter(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleRemoveSavedFlight = (id) => {
+    // 在实际应用中，这里会发送API请求删除保存的航班
+    // 这里简单模拟删除
+    setSavedFlights(savedFlights.filter(flight => flight.id !== id));
+  };
+
+  // Add logout handler
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        // Redirect to login page after successful logout
+        router.push('/login');
+      } else {
+        throw new Error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* 导航栏 */}
+      <nav className="bg-white shadow-sm">
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+          <Link href="/" className="text-2xl font-bold text-blue-600 flex items-center">
+            <span className="font-black">Sk.</span>
+          </Link>
+          <div className="flex items-center space-x-6">
+            <Link href="/flights" className="text-gray-600 hover:text-blue-600 font-medium">Flights</Link>
+            <Link href="/bookings" className="text-gray-600 hover:text-blue-600 font-medium">My Orders</Link>
+            <Link href="/profile" className="text-blue-600">
+              <UserIcon />
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-6">My Account</h1>
+        
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 text-red-600 p-4 rounded-lg">
+            {error}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* 侧边栏 */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-xl shadow-sm p-4 sticky top-4">
+                <div className="flex flex-col items-center mb-6 pb-6 border-b border-gray-100">
+                  <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-3">
+                    <UserIcon />
+                  </div>
+                  <h3 className="text-lg font-semibold">{user?.name}</h3>
+                  <p className="text-sm text-gray-500">{user?.email}</p>
+                </div>
+                
+                <ul className="space-y-2">
+                  <li>
+                    <button 
+                      onClick={() => setActiveTab('profile')}
+                      className={`w-full text-left px-4 py-2 rounded-lg ${activeTab === 'profile' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      Profile Information
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => setActiveTab('bookings')}
+                      className={`w-full text-left px-4 py-2 rounded-lg ${activeTab === 'bookings' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      My Bookings
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => setActiveTab('savedFlights')}
+                      className={`w-full text-left px-4 py-2 rounded-lg ${activeTab === 'savedFlights' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      Saved Flights
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => setActiveTab('passengers')}
+                      className={`w-full text-left px-4 py-2 rounded-lg ${activeTab === 'passengers' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      Passengers
+                    </button>
+                  </li>
+                  <li className="pt-4 mt-4 border-t border-gray-100">
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 rounded-lg text-red-600 hover:bg-red-50"
+                    >
+                      Logout
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            {/* 主内容区 */}
+            <div className="lg:col-span-3">
+              {/* 个人信息 */}
+              {activeTab === 'profile' && (
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold">Profile Information</h2>
+                    {!isEditing && (
+                      <button 
+                        onClick={() => setIsEditing(true)}
+                        className="px-4 py-2 text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                      >
+                        Edit
+                      </button>
+                    )}
+                  </div>
+                  
+                  {isEditing ? (
+                    <form onSubmit={handleEditSubmit}>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                          <input
+                            type="text"
+                            name="name"
+                            value={editForm.name}
+                            onChange={(e) => handleInputChange(e, setEditForm)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                          <input
+                            type="email"
+                            name="email"
+                            value={editForm.email}
+                            onChange={(e) => handleInputChange(e, setEditForm)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={editForm.phone}
+                            onChange={(e) => handleInputChange(e, setEditForm)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Passport Number</label>
+                          <input
+                            type="text"
+                            name="passport_number"
+                            value={editForm.passport_number}
+                            onChange={(e) => handleInputChange(e, setEditForm)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-6 flex space-x-3">
+                        <button
+                          type="submit"
+                          className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          Save Changes
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditing(false)}
+                          className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4">
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Full Name</p>
+                        <p className="font-medium">{user?.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Email</p>
+                        <p className="font-medium">{user?.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Phone</p>
+                        <p className="font-medium">{user?.phone}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Passport Number</p>
+                        <p className="font-medium">{user?.passport_number}</p>
+                      </div>
+                   </div>
                 </div>
             </nav>
 

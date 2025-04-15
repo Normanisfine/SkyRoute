@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server';
 import db from '@/utils/db';
 
 export async function PUT(request, { params }) {
+  const connection = await db.getConnection();
+  
   try {
-    const { flightId } = params;
+    const flightId = params.flightId;
     const {
       flightNumber,
       departureAirportId,
@@ -13,33 +15,24 @@ export async function PUT(request, { params }) {
       aircraftId,
       airlineId,
       basicPrice,
+      status
     } = await request.json();
 
-    // Validate input
-    if (!flightNumber || !departureAirportId || !arrivalAirportId || !departureTime || 
-        !arrivalTime || !aircraftId || !airlineId || !basicPrice) {
-      return NextResponse.json(
-        { error: 'All fields are required' },
-        { status: 400 }
-      );
-    }
+    await connection.beginTransaction();
 
-    // Update the flight in the database
-    const query = `
+    // Update flight
+    await connection.execute(`
       UPDATE Flight 
-      SET 
-        flight_number = ?,
-        departure_airport_id = ?,
-        arrival_airport_id = ?,
-        departure_time = ?,
-        arrival_time = ?,
-        aircraft_id = ?,
-        airline_id = ?,
-        basic_price = ?
+      SET flight_number = ?,
+          departure_airport_id = ?,
+          arrival_airport_id = ?,
+          departure_time = ?,
+          arrival_time = ?,
+          aircraft_id = ?,
+          airline_id = ?,
+          basic_price = ?
       WHERE flight_id = ?
-    `;
-
-    const values = [
+    `, [
       flightNumber,
       departureAirportId,
       arrivalAirportId,
@@ -49,31 +42,63 @@ export async function PUT(request, { params }) {
       airlineId,
       basicPrice,
       flightId
-    ];
+    ]);
 
-    await db.query(query, values);
+    // Update flight status
+    await connection.execute(`
+      UPDATE Flight_Status 
+      SET status = ?, 
+          last_updated = NOW()
+      WHERE flight_id = ?
+    `, [status, flightId]);
 
-    return NextResponse.json({ message: 'Flight updated successfully' });
+    await connection.commit();
+    
+    return NextResponse.json({ success: true });
+
   } catch (error) {
+    await connection.rollback();
     console.error('Error updating flight:', error);
     return NextResponse.json(
-      { error: 'Failed to update flight: ' + error.message },
+      { error: 'Failed to update flight' },
       { status: 500 }
     );
+  } finally {
+    connection.release();
   }
 }
 
 export async function DELETE(request, { params }) {
+  const connection = await db.getConnection();
+  
   try {
     const { flightId } = params;
-    const query = 'DELETE FROM Flight WHERE flight_id = ?';
-    await db.query(query, [flightId]);
-    return NextResponse.json({ message: 'Flight deleted successfully' });
+    
+    await connection.beginTransaction();
+
+    // Delete flight status first (due to foreign key constraint)
+    await connection.execute(
+      'DELETE FROM Flight_Status WHERE flight_id = ?',
+      [flightId]
+    );
+
+    // Then delete the flight
+    await connection.execute(
+      'DELETE FROM Flight WHERE flight_id = ?',
+      [flightId]
+    );
+
+    await connection.commit();
+    
+    return NextResponse.json({ message: 'Flight and status deleted successfully' });
   } catch (error) {
+    await connection.rollback();
     console.error('Error deleting flight:', error);
     return NextResponse.json(
       { error: 'Failed to delete flight: ' + error.message },
       { status: 500 }
     );
+  } finally {
+    connection.release();
   }
 }

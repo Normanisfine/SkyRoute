@@ -33,8 +33,13 @@ const SearchPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // 在实际应用中，这里会导航到搜索结果页面
-    router.push(`/search?origin=${searchForm.origin}&destination=${searchForm.destination}&departDate=${searchForm.departDate}`);
+    const searchParams = new URLSearchParams({
+      origin: searchForm.origin,
+      destination: searchForm.destination,
+      departDate: searchForm.departDate,
+      ...(searchForm.returnDate && { returnDate: searchForm.returnDate })
+    });
+    router.push(`/search?${searchParams.toString()}`);
   };
 
   return (
@@ -90,28 +95,27 @@ const SearchPage = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="space-y-4">
                 <div>
-                  <label htmlFor="departDate" className="block text-sm font-medium text-gray-700 mb-1">Depart Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Departure Date</label>
                   <input
                     type="date"
-                    id="departDate"
                     name="departDate"
                     value={searchForm.departDate}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     required
                   />
                 </div>
                 <div>
-                  <label htmlFor="returnDate" className="block text-sm font-medium text-gray-700 mb-1">Return Date (Optional)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Return Date (Optional)</label>
                   <input
                     type="date"
-                    id="returnDate"
                     name="returnDate"
                     value={searchForm.returnDate}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    min={searchForm.departDate}
                   />
                 </div>
               </div>
