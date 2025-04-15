@@ -30,6 +30,7 @@ const SearchResultPage = () => {
     maxPrice: '',
     departureTime: ''
   });
+  const [error, setError] = useState(null);
 
   // 从URL获取搜索参数
   const origin = searchParams.get('origin');
@@ -40,74 +41,21 @@ const SearchResultPage = () => {
     const fetchFlights = async () => {
       try {
         setLoading(true);
-        // 这里会是一个真实的API调用
-        // const response = await fetch(`/api/flights/search?origin=${origin}&destination=${destination}&date=${departDate}`);
-        // const data = await response.json();
-        // setFlights(data);
+        const response = await fetch(
+          `/api/flights/search?origin=${origin}&destination=${destination}&departDate=${departDate}`
+        );
 
-        // 模拟数据
-        setTimeout(() => {
-          const mockFlights = [
-            {
-              id: 1,
-              flightNumber: 'CA980',
-              airline: 'China Eastern',
-              origin: origin || 'PVG',
-              destination: destination || 'JFK',
-              departureTime: '12:59 pm',
-              arrivalTime: '3:37 pm',
-              duration: '2 h 38 m',
-              price: 580,
-              date: departDate || '2024-10-15',
-              stops: 0
-            },
-            {
-              id: 2,
-              flightNumber: 'CA981',
-              airline: 'Air China',
-              origin: origin || 'PVG',
-              destination: destination || 'JFK',
-              departureTime: '10:20 am',
-              arrivalTime: '2:05 pm',
-              duration: '3 h 45 m',
-              price: 520,
-              date: departDate || '2024-10-15',
-              stops: 1
-            },
-            {
-              id: 3,
-              flightNumber: 'MU502',
-              airline: 'China Eastern',
-              origin: origin || 'PVG',
-              destination: destination || 'JFK',
-              departureTime: '2:30 pm',
-              arrivalTime: '5:45 pm',
-              duration: '3 h 15 m',
-              price: 610,
-              date: departDate || '2024-10-15',
-              stops: 0
-            },
-            {
-              id: 4,
-              flightNumber: 'CZ306',
-              airline: 'China Southern',
-              origin: origin || 'PVG',
-              destination: destination || 'JFK',
-              departureTime: '8:15 am',
-              arrivalTime: '11:50 am',
-              duration: '3 h 35 m',
-              price: 490,
-              date: departDate || '2024-10-15',
-              stops: 1
-            }
-          ];
-          setFlights(mockFlights);
-          setFilteredFlights(mockFlights);
-          setLoading(false);
-        }, 1000);
+        if (!response.ok) {
+          throw new Error('Failed to fetch flights');
+        }
 
+        const data = await response.json();
+        setFlights(data);
+        setFilteredFlights(data);
       } catch (error) {
         console.error('Error fetching flights:', error);
+        setError('Failed to load flights. Please try again later.');
+      } finally {
         setLoading(false);
       }
     };
@@ -115,7 +63,7 @@ const SearchResultPage = () => {
     if (origin && destination && departDate) {
       fetchFlights();
     } else {
-      // 如果缺少参数，重定向到搜索页面
+      // Redirect to search page if parameters are missing
       router.push('/flights');
     }
   }, [origin, destination, departDate, router]);
@@ -175,7 +123,6 @@ const SearchResultPage = () => {
   }, [filters, flights]);
 
   const handleBookFlight = (flightId) => {
-    // 实际应用中，这里会导航到订票页面
     router.push(`/bookings/new?flightId=${flightId}`);
   };
 
@@ -287,6 +234,16 @@ const SearchResultPage = () => {
             {loading ? (
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : error ? (
+              <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+                <h3 className="text-2xl font-medium text-gray-600">{error}</h3>
+                <button
+                  onClick={() => router.push('/flights')}
+                  className="mt-4 px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  New Search
+                </button>
               </div>
             ) : filteredFlights.length === 0 ? (
               <div className="bg-white rounded-xl shadow-sm p-8 text-center">
