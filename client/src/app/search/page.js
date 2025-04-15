@@ -18,6 +18,28 @@ const PlaneIcon = () => (
   </svg>
 );
 
+// Add new status badge component
+const StatusBadge = ({ status }) => {
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'on-time':
+        return 'bg-green-100 text-green-800';
+      case 'delayed':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  return (
+    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+      {status || 'Unknown'}
+    </span>
+  );
+};
+
 const SearchResultPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,11 +50,11 @@ const SearchResultPage = () => {
     airline: '',
     minPrice: '',
     maxPrice: '',
-    departureTime: ''
+    departureTime: '',
+    status: '' // Add status filter
   });
   const [error, setError] = useState(null);
 
-  // 从URL获取搜索参数
   const origin = searchParams.get('origin');
   const destination = searchParams.get('destination');
   const departDate = searchParams.get('departDate');
@@ -41,19 +63,56 @@ const SearchResultPage = () => {
     const fetchFlights = async () => {
       try {
         setLoading(true);
+        setError(null);
+
+        // Format the date to match MySQL date format
+        const formattedDate = new Date(departDate).toISOString().split('T')[0];
+        
         const response = await fetch(
-          `/api/flights/search?origin=${origin}&destination=${destination}&departDate=${departDate}`
+          `/api/flights/search?` + new URLSearchParams({
+            origin: origin,
+            destination: destination,
+            departDate: formattedDate
+          })
         );
 
         if (!response.ok) {
-          throw new Error('Failed to fetch flights');
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
-        setFlights(data);
-        setFilteredFlights(data);
+        
+        // Transform the data to match the component's expected format
+        const formattedFlights = data.map(flight => ({
+          id: flight.id,
+          airline: flight.airline,
+          flightNumber: flight.flightNumber,
+          origin: flight.origin,
+          originCity: flight.originCity,
+          destination: flight.destination,
+          destinationCity: flight.destinationCity,
+          departureTime: new Date(flight.departureDateTime).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }),
+          arrivalTime: new Date(flight.arrivalDateTime).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }),
+          price: flight.lowestPrice,
+          duration: calculateDuration(flight.departureDateTime, flight.arrivalDateTime),
+          stops: 0,
+          status: flight.status,
+          availableSeats: flight.availableSeats,
+          seatClass: flight.seatClass
+        }));
+
+        setFlights(formattedFlights);
+        setFilteredFlights(formattedFlights);
       } catch (error) {
-        console.error('Error fetching flights:', error);
+        console.error('Error searching flights:', error);
         setError('Failed to load flights. Please try again later.');
       } finally {
         setLoading(false);
@@ -63,10 +122,19 @@ const SearchResultPage = () => {
     if (origin && destination && departDate) {
       fetchFlights();
     } else {
-      // Redirect to search page if parameters are missing
       router.push('/flights');
     }
   }, [origin, destination, departDate, router]);
+
+  // Helper function to calculate flight duration
+  const calculateDuration = (departure, arrival) => {
+    const start = new Date(departure);
+    const end = new Date(arrival);
+    const durationMs = end - start;
+    const hours = Math.floor(durationMs / (1000 * 60 * 60));
+    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
+  };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -119,6 +187,13 @@ const SearchResultPage = () => {
       }
     }
 
+    // Add status filter
+    if (filters.status) {
+      result = result.filter(flight => 
+        flight.status?.toLowerCase() === filters.status.toLowerCase()
+      );
+    }
+
     setFilteredFlights(result);
   }, [filters, flights]);
 
@@ -149,16 +224,14 @@ const SearchResultPage = () => {
         <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex justify-between items-center">
           <div>
             <div className="text-xl font-bold flex items-center">
-              {origin || 'PVG'}
-              <span className="mx-2 text-gray-400">→</span>
-              {destination || 'JFK'}
+              {origin} <span className="mx-2 text-gray-400">→</span> {destination}
             </div>
             <div className="text-gray-500">
-              {departDate ? new Date(departDate).toLocaleDateString('en-US', {
+              {new Date(departDate).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
-              }) : 'October 15, 2024'}
+              })}
               {filteredFlights.length > 0 && ` · ${filteredFlights.length} flights found`}
             </div>
           </div>
@@ -186,6 +259,21 @@ const SearchResultPage = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Airline name"
                 />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Flight Status</label>
+                <select
+                  name="status"
+                  value={filters.status}
+                  onChange={handleFilterChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="on-time">On Time</option>
+                  <option value="delayed">Delayed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
               </div>
 
               <div className="mb-4">
@@ -262,12 +350,13 @@ const SearchResultPage = () => {
                   <div key={flight.id} className="bg-white rounded-xl shadow-sm overflow-hidden transition-all hover:shadow-md">
                     <div className="p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center">
-                          <div className="flex items-center mr-4">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex items-center">
                             <PlaneIcon />
                             <span className="ml-2 font-medium">{flight.airline}</span>
                           </div>
                           <span className="text-sm text-gray-500">{flight.flightNumber}</span>
+                          <StatusBadge status={flight.status} />
                         </div>
                         <div className="text-xl font-bold text-blue-600">${flight.price}</div>
                       </div>
@@ -277,6 +366,7 @@ const SearchResultPage = () => {
                           <div className="text-center mr-3">
                             <div className="text-xl font-bold">{flight.departureTime}</div>
                             <div className="text-sm text-gray-500">{flight.origin}</div>
+                            <div className="text-xs text-gray-400">{flight.originCity}</div>
                           </div>
                           <div className="flex flex-col items-center mx-2 px-2">
                             <div className="text-xs text-gray-500">{flight.duration}</div>
@@ -284,23 +374,33 @@ const SearchResultPage = () => {
                               <div className="absolute top-1/2 left-0 w-2 h-2 bg-blue-600 rounded-full transform -translate-y-1/2"></div>
                               <div className="absolute top-1/2 right-0 w-2 h-2 bg-blue-600 rounded-full transform -translate-y-1/2"></div>
                             </div>
-                            <div className="text-xs text-gray-500">
-                              {flight.stops === 0 ? 'Nonstop' : `${flight.stops} stop${flight.stops > 1 ? 's' : ''}`}
-                            </div>
+                            <div className="text-xs text-gray-500">Direct</div>
                           </div>
                           <div className="text-center ml-3">
                             <div className="text-xl font-bold">{flight.arrivalTime}</div>
                             <div className="text-sm text-gray-500">{flight.destination}</div>
+                            <div className="text-xs text-gray-400">{flight.destinationCity}</div>
                           </div>
                         </div>
 
                         <button
                           onClick={() => handleBookFlight(flight.id)}
-                          className="mt-3 sm:mt-0 w-full sm:w-auto px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                          disabled={flight.status?.toLowerCase() === 'cancelled'}
+                          className={`mt-3 sm:mt-0 w-full sm:w-auto px-6 py-2 font-medium rounded-lg transition-colors
+                            ${flight.status?.toLowerCase() === 'cancelled' 
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                              : 'bg-blue-600 text-white hover:bg-blue-700'}`}
                         >
-                          Book Now
+                          {flight.status?.toLowerCase() === 'cancelled' ? 'Unavailable' : 'Book Now'}
                         </button>
                       </div>
+
+                      {/* Show delay warning if applicable */}
+                      {flight.status?.toLowerCase() === 'delayed' && (
+                        <div className="mt-3 p-2 bg-yellow-50 text-yellow-700 text-sm rounded">
+                          ⚠️ This flight is currently experiencing delays. Please check back for updates.
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -21,6 +21,7 @@ const AdminPage = () => {
     aircraftId: '',
     airlineId: '',
     basicPrice: '',
+    status: 'On-Time',
   });
 
   // Airport form data
@@ -74,18 +75,37 @@ const AdminPage = () => {
   // Aircraft view state
   const [aircraftView, setAircraftView] = useState('add');
 
-  // Fetch airports, airlines, and aircraft on component mount
+  // Add new state for flight statuses
+  const [flightStatuses, setFlightStatuses] = useState({});
+
+  // Add this after your state declarations
+  useEffect(() => {
+    console.log('Current flights:', flights);
+    console.log('Current flight statuses:', flightStatuses);
+  }, [flights, flightStatuses]);
+
+  // Add this function at the top of your component
+  const removeDuplicateFlights = (flights) => {
+    const seen = new Set();
+    return flights.filter(flight => {
+      const duplicate = seen.has(flight.flight_id);
+      seen.add(flight.flight_id);
+      return !duplicate;
+    });
+  };
+
+  // Modify your useEffect where you set the flights
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('Fetching data...');
-        const [airportsRes, airlinesRes, aircraftRes, flightsRes, seatsRes, pricesRes] = await Promise.all([
+        const [airportsRes, airlinesRes, aircraftRes, flightsRes, seatsRes, pricesRes, flightStatusRes] = await Promise.all([
           fetch('/api/admin/airports'),
           fetch('/api/admin/airlines'),
           fetch('/api/admin/aircraft'),
           fetch('/api/admin/flights'),
           fetch('/api/admin/seats'),
-          fetch('/api/admin/prices')
+          fetch('/api/admin/prices'),
+          fetch('/api/admin/flight-status')
         ]);
 
         const airportsData = await airportsRes.json();
@@ -94,15 +114,24 @@ const AdminPage = () => {
         const flightsData = await flightsRes.json();
         const seatsData = await seatsRes.json();
         const pricesData = await pricesRes.json();
+        const flightStatusData = await flightStatusRes.json();
 
-        console.log('Flights data received:', flightsData);
+        // Remove duplicates before setting state
+        const uniqueFlights = removeDuplicateFlights(flightsData);
 
         setAirports(airportsData);
         setAirlines(airlinesData);
         setAircraft(aircraftData);
-        setFlights(flightsData);
+        setFlights(uniqueFlights); // Set unique flights
         setSeats(seatsData);
         setPrices(pricesData);
+
+        // Convert flight status array to object for easier lookup
+        const statusObj = {};
+        flightStatusData.forEach(status => {
+          statusObj[status.flight_id] = status;
+        });
+        setFlightStatuses(statusObj);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -114,20 +143,28 @@ const AdminPage = () => {
   const handleFlightSubmit = async (e) => {
     e.preventDefault();
     if (editingItem) {
-      // If we have an editingItem, we're updating
       await handleUpdateFlight(e);
     } else {
-      // Otherwise, we're creating a new flight
       try {
-        const response = await fetch('/api/admin/flights', {
+        const flightResponse = await fetch('/api/admin/flights', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(flightFormData),
+          body: JSON.stringify({
+            flightNumber: flightFormData.flightNumber,
+            departureAirportId: flightFormData.departureAirportId,
+            arrivalAirportId: flightFormData.arrivalAirportId,
+            departureTime: flightFormData.departureTime,
+            arrivalTime: flightFormData.arrivalTime,
+            aircraftId: flightFormData.aircraftId,
+            airlineId: flightFormData.airlineId,
+            basicPrice: flightFormData.basicPrice,
+            status: flightFormData.status, // Pass the status to be handled in a single transaction
+          }),
         });
 
-        if (!response.ok) {
+        if (!flightResponse.ok) {
           throw new Error('Failed to add flight');
         }
 
@@ -141,7 +178,13 @@ const AdminPage = () => {
           aircraftId: '',
           airlineId: '',
           basicPrice: '',
+          status: 'On-Time',
         });
+
+        // Refresh the flights data
+        const refreshResponse = await fetch('/api/admin/flights');
+        const refreshedFlights = await refreshResponse.json();
+        setFlights(refreshedFlights);
       } catch (error) {
         console.error('Error adding flight:', error);
         alert('Failed to add flight');
@@ -289,8 +332,9 @@ const AdminPage = () => {
   };
 
   const handleEditFlight = (flight) => {
-    console.log('Flight data:', flight); // Debug log to see what data we receive
-
+    console.log('Editing flight:', flight);
+    console.log('Current flight statuses:', flightStatuses);
+    
     setEditingItem(flight);
     setFlightFormData({
       flightNumber: flight.flight_number || '',
@@ -301,6 +345,8 @@ const AdminPage = () => {
       aircraftId: flight.aircraft_id ? flight.aircraft_id.toString() : '',
       airlineId: flight.airline_id ? flight.airline_id.toString() : '',
       basicPrice: flight.basic_price || '',
+      // Try both sources for status
+      status: flight.status || flightStatuses[flight.flight_id]?.status || 'On-Time',
     });
     setFlightView('add');
   };
@@ -314,9 +360,15 @@ const AdminPage = () => {
 
         if (!response.ok) throw new Error('Failed to delete flight');
 
-        // Refresh flights data
+        // Update local state
         const updatedFlights = flights.filter(f => f.flight_id !== flightId);
         setFlights(updatedFlights);
+        
+        const updatedStatuses = { ...flightStatuses };
+        delete updatedStatuses[flightId];
+        setFlightStatuses(updatedStatuses);
+
+        alert('Flight deleted successfully');
       } catch (error) {
         console.error('Error deleting flight:', error);
         alert('Failed to delete flight');
@@ -327,37 +379,45 @@ const AdminPage = () => {
   const handleUpdateFlight = async (e) => {
     e.preventDefault();
     try {
-      console.log('Updating flight:', editingItem.flight_id);
-      console.log('Update data:', flightFormData);
-
-      const response = await fetch(`/api/admin/flights/${editingItem.flight_id}`, {
+      // Update flight details
+      const flightResponse = await fetch(`/api/admin/flights/${editingItem.flight_id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(flightFormData),
+        body: JSON.stringify({
+          flightNumber: flightFormData.flightNumber,
+          departureAirportId: flightFormData.departureAirportId,
+          arrivalAirportId: flightFormData.arrivalAirportId,
+          departureTime: flightFormData.departureTime,
+          arrivalTime: flightFormData.arrivalTime,
+          aircraftId: flightFormData.aircraftId,
+          airlineId: flightFormData.airlineId,
+          basicPrice: flightFormData.basicPrice,
+        }),
       });
 
-      // Log the raw response
-      const responseText = await response.text();
-      console.log('Raw response:', responseText);
-
-      // Try to parse the response as JSON
-      let responseData;
-      try {
-        responseData = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('Failed to parse response as JSON:', parseError);
-        throw new Error('Server returned invalid JSON');
+      if (!flightResponse.ok) {
+        throw new Error('Failed to update flight');
       }
 
-      if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to update flight');
+      // Update flight status
+      const statusResponse = await fetch(`/api/admin/flight-status/${editingItem.flight_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: flightFormData.status,
+          lastUpdated: new Date().toISOString()
+        }),
+      });
+
+      if (!statusResponse.ok) {
+        throw new Error('Failed to update flight status');
       }
 
       alert('Flight updated successfully!');
-
-      // Reset form and editing state
       setEditingItem(null);
       setFlightFormData({
         flightNumber: '',
@@ -368,14 +428,25 @@ const AdminPage = () => {
         aircraftId: '',
         airlineId: '',
         basicPrice: '',
+        status: 'On-Time',
       });
 
       // Refresh flights data
-      const flightsRes = await fetch('/api/admin/flights');
+      const [flightsRes, statusRes] = await Promise.all([
+        fetch('/api/admin/flights'),
+        fetch('/api/admin/flight-status')
+      ]);
+      
       const flightsData = await flightsRes.json();
+      const statusData = await statusRes.json();
+      
       setFlights(flightsData);
+      const statusObj = {};
+      statusData.forEach(status => {
+        statusObj[status.flight_id] = status;
+      });
+      setFlightStatuses(statusObj);
 
-      // Switch back to manage view
       setFlightView('manage');
     } catch (error) {
       console.error('Error updating flight:', error);
@@ -765,6 +836,21 @@ const AdminPage = () => {
                 />
               </div>
 
+              <div style={{ marginBottom: '20px' }}>
+                <label style={labelStyle}>Flight Status:</label>
+                <select
+                  name="status"
+                  value={flightFormData.status}
+                  onChange={handleChange}
+                  required
+                  style={inputStyle}
+                >
+                  <option value="On-Time">On-Time</option>
+                  <option value="Delayed">Delayed</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
+
               <button type="submit" style={{
                 padding: '12px 24px',
                 backgroundColor: '#0056b3',
@@ -793,6 +879,7 @@ const AdminPage = () => {
                       aircraftId: '',
                       airlineId: '',
                       basicPrice: '',
+                      status: 'On-Time',
                     });
                   }}
                   style={{
@@ -830,6 +917,7 @@ const AdminPage = () => {
                     <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Departure Time</th>
                     <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Arrival Time</th>
                     <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Price</th>
+                    <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Status</th>
                     <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Actions</th>
                   </tr>
                 </thead>
@@ -853,6 +941,9 @@ const AdminPage = () => {
                       </td>
                       <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
                         ${flight.basic_price}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        {flight.status || flightStatuses[flight.flight_id]?.status || 'On-Time'}
                       </td>
                       <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
                         <button

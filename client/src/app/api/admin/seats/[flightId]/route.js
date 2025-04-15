@@ -1,6 +1,17 @@
 import { NextResponse } from 'next/server';
 import db from '@/utils/db';
-import { sql } from '@vercel/postgres';
+import mysql from 'mysql2/promise';
+
+// Create a connection pool
+const pool = mysql.createPool({
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
 
 export async function GET(request, { params }) {
   try {
