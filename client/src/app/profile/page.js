@@ -201,6 +201,27 @@ const ProfilePage = () => {
     setSavedFlights(savedFlights.filter(flight => flight.id !== id));
   };
 
+  // Add logout handler
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        // Redirect to login page after successful logout
+        router.push('/login');
+      } else {
+        throw new Error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* 导航栏 */}
@@ -274,6 +295,14 @@ const ProfilePage = () => {
                       className={`w-full text-left px-4 py-2 rounded-lg ${activeTab === 'passengers' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}
                     >
                       Passengers
+                    </button>
+                  </li>
+                  <li className="pt-4 mt-4 border-t border-gray-100">
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 rounded-lg text-red-600 hover:bg-red-50"
+                    >
+                      Logout
                     </button>
                   </li>
                 </ul>
