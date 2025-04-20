@@ -52,13 +52,13 @@ const ProfilePage = () => {
                 setLoading(true);
 
                 // Fetch real user data from API
-                const response = await fetch('/api/profile');
+                const userResponse = await fetch('/api/profile');
                 
-                if (!response.ok) {
+                if (!userResponse.ok) {
                     throw new Error('Failed to fetch profile data');
                 }
                 
-                const userData = await response.json();
+                const userData = await userResponse.json();
                 
                 // Format the user data to match the expected structure
                 const formattedUser = {
@@ -69,33 +69,34 @@ const ProfilePage = () => {
                     passport_number: userData.passport_number || ''
                 };
 
-                // For now, still use mock data for these other entities
-                // You can replace with actual API calls when endpoints are ready
-                const mockBookings = [
-                    {
-                        id: 278,
-                        flightNumber: 'CA981',
-                        origin: 'PEK',
-                        destination: 'JFK',
-                        date: '2025-04-02',
-                        price: 580,
-                        status: 'Confirmed',
-                        departureTime: '10:20 am',
-                        airline: 'Air China'
-                    },
-                    {
-                        id: 279,
-                        flightNumber: 'MU502',
-                        origin: 'PVG',
-                        destination: 'LAX',
-                        date: '2025-05-15',
-                        price: 610,
-                        status: 'Confirmed',
-                        departureTime: '2:30 pm',
-                        airline: 'China Eastern'
-                    }
-                ];
+                // Fetch real bookings data
+                const bookingsResponse = await fetch('/api/bookings');
+                let bookingsData = [];
+                
+                if (bookingsResponse.ok) {
+                    // Get the bookings and ensure they have the right format for the UI
+                    const fetchedBookings = await bookingsResponse.json();
+                    bookingsData = fetchedBookings.map(booking => ({
+                        id: booking.id,
+                        flightNumber: booking.flightNumber,
+                        origin: booking.origin,
+                        destination: booking.destination,
+                        date: booking.date,
+                        price: booking.price,
+                        status: booking.status || booking.bookingStatus || 'Confirmed',
+                        departureTime: booking.departureTime,
+                        airline: booking.airline,
+                        // Add any other fields needed by the UI
+                        arrivalTime: booking.arrivalTime || '12:00 pm',
+                        passenger: booking.passenger,
+                        seat: booking.seat,
+                        classType: booking.classType
+                    }));
+                } else {
+                    console.error('Failed to fetch bookings:', await bookingsResponse.text());
+                }
 
+                // For now, still use mock data for these other entities
                 const mockSavedFlights = [
                     {
                         id: 1,
@@ -135,7 +136,7 @@ const ProfilePage = () => {
                 ];
 
                 setUser(formattedUser);
-                setBookings(mockBookings);
+                setBookings(bookingsData);
                 setSavedFlights(mockSavedFlights);
                 setPassengers(mockPassengers);
                 setEditForm({
