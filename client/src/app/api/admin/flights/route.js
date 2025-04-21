@@ -16,10 +16,14 @@ export async function POST(request) {
       arrivalTime,
       aircraftId,
       airlineId,
-      basicPrice
+      basicPrice,
+      status
     } = await request.json();
 
-    const query = `
+    await connection.beginTransaction();
+
+    // Insert flight
+    const [flightResult] = await connection.execute(`
       INSERT INTO Flight (
         flight_number,
         departure_airport_id,
@@ -30,9 +34,7 @@ export async function POST(request) {
         airline_id,
         basic_price
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    const [result] = await db.execute(query, [
+    `, [
       flightNumber,
       departureAirportId,
       arrivalAirportId,
@@ -43,16 +45,28 @@ export async function POST(request) {
       basicPrice
     ]);
 
+    // Insert flight status in the same transaction
+    await connection.execute(`
+      INSERT INTO Flight_Status (flight_id, status, last_updated)
+      VALUES (?, ?, NOW())
+    `, [flightResult.insertId, status || 'On-Time']);
+
+    await connection.commit();
+    
     return NextResponse.json({ 
       success: true, 
-      flightId: result.insertId 
+      insertId: flightResult.insertId 
     });
+
   } catch (error) {
+    await connection.rollback();
     console.error('Error adding flight:', error);
     return NextResponse.json(
       { error: 'Failed to add flight' },
       { status: 500 }
     );
+  } finally {
+    connection.release();
   }
 }
 
@@ -62,8 +76,8 @@ export async function GET(request) {
   if (authResponse) return authResponse;
 
   try {
-    const query = `
-      SELECT 
+    const [rows] = await db.execute(`
+      SELECT DISTINCT
         f.flight_id,
         f.flight_number,
         f.departure_airport_id,
@@ -73,29 +87,18 @@ export async function GET(request) {
         f.aircraft_id,
         f.airline_id,
         f.basic_price,
+        fs.status,
+        fs.last_updated,
         dep.airport_name as departure_airport,
-        arr.airport_name as arrival_airport,
-        a.model as aircraft_model,
-        al.airline_name
+        arr.airport_name as arrival_airport
       FROM Flight f
-      JOIN Airport dep ON f.departure_airport_id = dep.airport_id
-      JOIN Airport arr ON f.arrival_airport_id = arr.airport_id
-      JOIN Aircraft a ON f.aircraft_id = a.aircraft_id
-      JOIN Airline al ON f.airline_id = al.airline_id
-      ORDER BY f.departure_time DESC
-    `;
-
-    console.log('Executing flights query...'); // Debug log
-    const [rows] = await db.execute(query);
-    console.log('Flights found:', rows.length); // Debug log
-    console.log('Flight data:', rows); // Debug log
-
+      LEFT JOIN Flight_Status fs ON f.flight_id = fs.flight_id
+      LEFT JOIN Airport dep ON f.departure_airport_id = dep.airport_id
+      LEFT JOIN Airport arr ON f.arrival_airport_id = arr.airport_id
+      ORDER BY f.flight_id
+    `);
     return NextResponse.json(rows);
   } catch (error) {
-    console.error('Error fetching flights:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch flights' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
