@@ -15,7 +15,7 @@ export async function GET() {
         const userData = JSON.parse(authCookie.value);
         const userId = userData.id;
 
-        // Complex JOIN query to get all booking information
+        // Updated query to calculate total price
         const [rows] = await db.execute(`
             SELECT 
                 b.booking_id as id,
@@ -25,7 +25,8 @@ export async function GET() {
                 f.departure_time as departureDateTime,
                 f.arrival_time as arrivalDateTime,
                 f.basic_price as basePrice,
-                pr.premium_price as price,
+                pr.premium_price as premiumPrice,
+                (f.basic_price + pr.premium_price) as totalPrice,
                 dep.iata_code as origin,
                 arr.iata_code as destination,
                 p.name as passenger,
@@ -79,7 +80,11 @@ export async function GET() {
                 date: departureTime.toISOString().split('T')[0],
                 status: row.bookingStatus,
                 airline: row.airline,
-                price: row.price,
+                // Use totalPrice instead of just premium price
+                price: row.totalPrice,
+                // Include base and premium price separately for detailed display
+                basePrice: row.basePrice,
+                premiumPrice: row.premiumPrice,
                 classType: row.classType,
                 flightStatus: row.flightStatus
             };

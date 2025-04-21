@@ -19,6 +19,7 @@ export async function GET() {
         sf.saved_flight_id,
         sf.flight_id,
         f.flight_number,
+        f.basic_price,
         dep.airport_name as departure_airport,
         dep.iata_code as departure_code,
         arr.airport_name as arrival_airport,
@@ -36,12 +37,12 @@ export async function GET() {
       ORDER BY sf.saved_time DESC
     `, [userId]);
 
-    const flightsWithDefaultPrice = rows.map(flight => ({
+    const flights = rows.map(flight => ({
       ...flight,
-      price: 450 // Default price
+      price: parseFloat(flight.basic_price)
     }));
 
-    return NextResponse.json(flightsWithDefaultPrice);
+    return NextResponse.json(flights);
   } catch (error) {
     console.error('Error fetching saved flights:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
