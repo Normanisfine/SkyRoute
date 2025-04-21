@@ -51,98 +51,107 @@ const ProfilePage = () => {
             try {
                 setLoading(true);
 
-                // 在实际应用中，你会发起实际的API请求，使用AirlineUser表
-                // 例如: const response = await fetch('/api/profile');
-                // 这里使用模拟数据
-                setTimeout(() => {
-                    // 模拟用户数据
-                    const mockUser = {
-                        id: 1,
-                        name: 'John Doe',
-                        email: 'johndoe@example.com',
-                        phone: '555-0100',
-                        passport_number: 'A1234567'
-                    };
+                // Fetch real user data from API
+                const userResponse = await fetch('/api/profile');
+                
+                if (!userResponse.ok) {
+                    throw new Error('Failed to fetch profile data');
+                }
+                
+                const userData = await userResponse.json();
+                
+                // Format the user data to match the expected structure
+                const formattedUser = {
+                    id: userData.user_id,
+                    name: userData.name,
+                    email: userData.email,
+                    phone: userData.phone || '',
+                    passport_number: userData.passport_number || ''
+                };
 
-                    // 模拟预订数据
-                    const mockBookings = [
-                        {
-                            id: 278,
-                            flightNumber: 'CA981',
-                            origin: 'PEK',
-                            destination: 'JFK',
-                            date: '2025-04-02',
-                            price: 580,
-                            status: 'Confirmed',
-                            departureTime: '10:20 am',
-                            airline: 'Air China'
-                        },
-                        {
-                            id: 279,
-                            flightNumber: 'MU502',
-                            origin: 'PVG',
-                            destination: 'LAX',
-                            date: '2025-05-15',
-                            price: 610,
-                            status: 'Confirmed',
-                            departureTime: '2:30 pm',
-                            airline: 'China Eastern'
-                        }
-                    ];
+                // Fetch real bookings data
+                const bookingsResponse = await fetch('/api/bookings');
+                let bookingsData = [];
+                
+                if (bookingsResponse.ok) {
+                    // Get the bookings and ensure they have the right format for the UI
+                    const fetchedBookings = await bookingsResponse.json();
+                    bookingsData = fetchedBookings.map(booking => ({
+                        id: booking.id,
+                        flightNumber: booking.flightNumber,
+                        origin: booking.origin,
+                        destination: booking.destination,
+                        date: booking.date,
+                        price: booking.price,
+                        status: booking.status || booking.bookingStatus || 'Confirmed',
+                        departureTime: booking.departureTime,
+                        airline: booking.airline,
+                        // Add any other fields needed by the UI
+                        arrivalTime: booking.arrivalTime || '12:00 pm',
+                        passenger: booking.passenger,
+                        seat: booking.seat,
+                        classType: booking.classType
+                    }));
+                } else {
+                    console.error('Failed to fetch bookings:', await bookingsResponse.text());
+                }
 
-                    // 模拟保存的航班数据
-                    const mockSavedFlights = [
-                        {
-                            id: 1,
-                            flightNumber: 'FL104',
-                            origin: 'FRA',
-                            destination: 'NRT',
-                            date: '2023-03-15',
-                            price: 750,
-                            departureTime: '6:00 am',
-                            airline: 'Lufthansa'
-                        },
-                        {
-                            id: 2,
-                            flightNumber: 'FL105',
-                            origin: 'NRT',
-                            destination: 'PEK',
-                            date: '2023-03-16',
-                            price: 320,
-                            departureTime: '12:00 pm',
-                            airline: 'Air France'
-                        }
-                    ];
-
-                    // 模拟乘客数据
-                    const mockPassengers = [
-                        {
-                            id: 1,
-                            name: 'John Doe Jr.',
-                            passport_number: 'B1234567',
-                            dob: '2000-01-01'
-                        },
-                        {
-                            id: 2,
-                            name: 'Emily Doe',
-                            passport_number: 'B1234568',
-                            dob: '2002-02-02'
-                        }
-                    ];
-
-                    setUser(mockUser);
-                    setBookings(mockBookings);
-                    setSavedFlights(mockSavedFlights);
-                    setPassengers(mockPassengers);
-                    setEditForm({
-                        name: mockUser.name,
-                        email: mockUser.email,
-                        phone: mockUser.phone,
-                        passport_number: mockUser.passport_number
+                // Fetch real saved flights data
+                const savedFlightsResponse = await fetch('/api/flights/saved');
+                let savedFlightsData = [];
+                
+                if (savedFlightsResponse.ok) {
+                    const fetchedSavedFlights = await savedFlightsResponse.json();
+                    savedFlightsData = fetchedSavedFlights.map(flight => {
+                        const departureTime = new Date(flight.departure_time);
+                        const departureTimeString = departureTime.toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                        }).toLowerCase();
+                        
+                        return {
+                            id: flight.saved_flight_id,
+                            flightNumber: flight.flight_number,
+                            origin: flight.departure_code || 'DEP',
+                            destination: flight.arrival_code || 'ARR',
+                            date: departureTime.toISOString().split('T')[0],
+                            price: flight.price || 450, // Default price if missing
+                            departureTime: departureTimeString,
+                            airline: flight.airline || 'Sky Airlines', // Default airline if missing
+                            // Additional properties needed by the UI
+                            arrivalTime: new Date(flight.arrival_time).toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                            }).toLowerCase()
+                        };
                     });
-                    setLoading(false);
-                }, 1000);
+                } else {
+                    console.error('Failed to fetch saved flights:', await savedFlightsResponse.text());
+                }
 
+                // Fetch real passengers data
+                const passengersResponse = await fetch('/api/passengers');
+                let passengersData = [];
+                
+                if (passengersResponse.ok) {
+                    passengersData = await passengersResponse.json();
+                } else {
+                    console.error('Failed to fetch passengers:', await passengersResponse.text());
+                }
+
+                setUser(formattedUser);
+                setBookings(bookingsData);
+                setSavedFlights(savedFlightsData);
+                setPassengers(passengersData);
+                setEditForm({
+                    name: formattedUser.name,
+                    email: formattedUser.email,
+                    phone: formattedUser.phone,
+                    passport_number: formattedUser.passport_number
+                });
+                setLoading(false);
             } catch (error) {
                 console.error('Error fetching user data:', error);
                 setError('Failed to load user data. Please try again later.');
@@ -153,38 +162,82 @@ const ProfilePage = () => {
         fetchUserData();
     }, []);
 
-    const handleEditSubmit = (e) => {
+    
+    const handleEditSubmit = async (e) => {
         e.preventDefault();
-        // 在实际应用中，这里会发送API请求更新用户信息
-        // 这里简单模拟更新
-        setUser({
-            ...user,
-            name: editForm.name,
-            email: editForm.email,
-            phone: editForm.phone,
-            passport_number: editForm.passport_number
-        });
-        setIsEditing(false);
+        try {
+            // Send real API request to update user info
+            const response = await fetch('/api/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(editForm)
+            });
+            
+            const responseData = await response.json();
+            
+            if (!response.ok) {
+                if (response.status === 409 && responseData.field === 'passport_number') {
+                    setError('This passport number is already registered to another user. Please use a different one.');
+                    return;
+                }
+                throw new Error(responseData.error || 'Failed to update profile');
+            }
+            
+            // Update local state
+            setUser({
+                ...user,
+                name: editForm.name,
+                email: editForm.email,
+                phone: editForm.phone,
+                passport_number: editForm.passport_number
+            });
+            setIsEditing(false);
+            
+            // Clear any previous errors
+            setError(null);
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            setError('Failed to update profile. Please try again.');
+        }
     };
 
-    const handleAddPassenger = (e) => {
+    const handleAddPassenger = async (e) => {
         e.preventDefault();
-        // 在实际应用中，这里会发送API请求添加乘客
-        // 这里简单模拟添加
-        const newId = passengers.length > 0 ? Math.max(...passengers.map(p => p.id)) + 1 : 1;
-        setPassengers([
-            ...passengers,
-            {
-                id: newId,
-                ...newPassenger
+        try {
+            const response = await fetch('/api/passengers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(newPassenger)
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to add passenger');
             }
-        ]);
-        // 重置表单
-        setNewPassenger({
-            name: '',
-            passport_number: '',
-            dob: ''
-        });
+            
+            // Get the newly created passenger with its ID
+            const createdPassenger = await response.json();
+            
+            // Add to the local state
+            setPassengers([...passengers, createdPassenger]);
+            
+            // Reset the form
+            setNewPassenger({
+                name: '',
+                passport_number: '',
+                dob: ''
+            });
+            
+            // Clear any previous errors
+            setError(null);
+        } catch (error) {
+            console.error('Error adding passenger:', error);
+            setError(error.message || 'Failed to add passenger. Please try again.');
+        }
     };
 
     const handleInputChange = (e, formSetter) => {
@@ -195,10 +248,44 @@ const ProfilePage = () => {
         }));
     };
 
-    const handleRemoveSavedFlight = (id) => {
-        // 在实际应用中，这里会发送API请求删除保存的航班
-        // 这里简单模拟删除
-        setSavedFlights(savedFlights.filter(flight => flight.id !== id));
+    const handleRemoveSavedFlight = async (id) => {
+        try {
+            const response = await fetch(`/api/flights/saved/${id}`, {
+                method: 'DELETE',
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to delete saved flight');
+            }
+            
+            // Update local state to reflect the deleted flight
+            setSavedFlights(savedFlights.filter(flight => flight.id !== id));
+        } catch (error) {
+            console.error('Error removing saved flight:', error);
+            setError('Failed to remove saved flight. Please try again.');
+        }
+    };
+
+    const handleRemovePassenger = async (id) => {
+        try {
+            const response = await fetch(`/api/passengers/${id}`, {
+                method: 'DELETE',
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to remove passenger');
+            }
+            
+            // Update local state to reflect the deleted passenger
+            setPassengers(passengers.filter(passenger => passenger.id !== id));
+            
+            // Clear any previous errors
+            setError(null);
+        } catch (error) {
+            console.error('Error removing passenger:', error);
+            setError(error.message || 'Failed to remove passenger. Please try again.');
+        }
     };
 
     // Add logout handler
@@ -645,10 +732,10 @@ const ProfilePage = () => {
                                                                 </div>
                                                             </div>
                                                             <div className="flex space-x-2">
-                                                                <button className="px-3 py-1 text-xs border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors">
-                                                                    Edit
-                                                                </button>
-                                                                <button className="px-3 py-1 text-xs border border-red-300 text-red-600 rounded hover:bg-red-50 transition-colors">
+                                                                <button 
+                                                                    onClick={() => handleRemovePassenger(passenger.id)}
+                                                                    className="px-3 py-1 text-xs border border-red-300 text-red-600 rounded hover:bg-red-50 transition-colors"
+                                                                >
                                                                     Remove
                                                                 </button>
                                                             </div>
