@@ -38,6 +38,12 @@ const BookingPage = () => {
   const [error, setError] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [loadingPassengers, setLoadingPassengers] = useState(true);
+  const [seats, setSeats] = useState({});
+  const [selectedSeat, setSelectedSeat] = useState(null);
+  const [loadingSeats, setLoadingSeats] = useState(true);
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [basePrice, setBasePrice] = useState(0);
+  const [premiumPrice, setPremiumPrice] = useState(0);
 
   // 从URL获取航班ID
   const flightId = searchParams.get('flightId');
@@ -47,6 +53,7 @@ const BookingPage = () => {
       try {
         setLoading(true);
         setLoadingPassengers(true);
+        setLoadingSeats(true);
         
         // Fetch real flight data from API
         const flightResponse = await fetch(`/api/flights/${flightId}`);
@@ -73,6 +80,8 @@ const BookingPage = () => {
         };
         
         setFlightData(processedFlightData);
+        setBasePrice(parseFloat(flightDbData.basic_price));
+        setTotalPrice(parseFloat(flightDbData.basic_price));
         
         // Fetch user profile
         const profileResponse = await fetch('/api/profile');
@@ -107,13 +116,28 @@ const BookingPage = () => {
           console.error('Error fetching passengers:', err);
         }
         
+        // Fetch available seats
+        try {
+          const seatsResponse = await fetch(`/api/flights/${flightId}/seats`);
+          if (seatsResponse.ok) {
+            const seatsData = await seatsResponse.json();
+            setSeats(seatsData);
+          } else {
+            console.error('Error fetching seats:', await seatsResponse.text());
+          }
+        } catch (err) {
+          console.error('Error fetching seats:', err);
+        }
+        
         setLoadingPassengers(false);
+        setLoadingSeats(false);
         setLoading(false);
         
       } catch (error) {
         console.error('Error fetching data:', error);
         setLoading(false);
         setLoadingPassengers(false);
+        setLoadingSeats(false);
         setError('Failed to load data. Please try again.');
       }
     };
@@ -204,10 +228,36 @@ const BookingPage = () => {
     }
   };
 
+  const handleSeatSelection = (seatId, seatInfo) => {
+    if (seatInfo.isBooked) {
+      return; // Don't allow selecting booked seats
+    }
+    
+    // Store the full seat info
+    setSelectedSeat(seatInfo);
+    
+    // Calculate the total price as the sum of base price and premium
+    const newTotalPrice = parseFloat(basePrice) + parseFloat(seatInfo.premium);
+    
+    // Update state with the new values
+    setTotalPrice(newTotalPrice);
+    setPremiumPrice(parseFloat(seatInfo.premium));
+    
+    console.log('Selected seat:', seatInfo);
+    console.log('New total price:', newTotalPrice);
+    console.log('Base price:', basePrice);
+    console.log('Premium:', seatInfo.premium);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!agreeTerms) {
       setError('Please agree to the terms and conditions to continue.');
+      return;
+    }
+    
+    if (!selectedSeat) {
+      setError('Please select a seat to continue.');
       return;
     }
 
@@ -220,7 +270,8 @@ const BookingPage = () => {
         flightId: flightData.id,
         passenger: bookingForm,
         passengerId: selectedPassenger !== 'self' ? selectedPassenger : 'self',
-        paymentMethod
+        paymentMethod,
+        priceId: selectedSeat.priceId  // Include the price ID from the selected seat
       };
       
       // Call API to create booking
@@ -283,7 +334,14 @@ const BookingPage = () => {
               <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold text-gray-800">Flight Details</h2>
-                  <span className="text-xl font-bold text-blue-600">${flightData.price}</span>
+                  <div className="text-right">
+                    <span className="text-xl font-bold text-blue-600">${(basePrice + premiumPrice).toFixed(2)}</span>
+                    {premiumPrice > 0 && (
+                      <div className="text-sm text-gray-500">
+                        Base: ${basePrice.toFixed(2)} + Premium: ${premiumPrice.toFixed(2)}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex flex-col md:flex-row justify-between mb-4">
@@ -334,6 +392,88 @@ const BookingPage = () => {
               </div>
 
               {/* 乘客信息表单 */}
+              <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Select Your Seat</h2>
+                
+                {loadingSeats ? (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : Object.keys(seats).length === 0 ? (
+                  <div className="text-center py-6 text-gray-500">No seats available for this flight.</div>
+                ) : (
+                  <div>
+                    {/* Seat Legend */}
+                    <div className="flex justify-center gap-6 mb-6">
+                      <div className="flex items-center">
+                        <div className="w-6 h-6 bg-white border border-gray-300 rounded mr-2"></div>
+                        <span className="text-sm">Available</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-6 h-6 bg-blue-100 border border-blue-500 rounded mr-2"></div>
+                        <span className="text-sm">Selected</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-6 h-6 bg-gray-200 border border-gray-400 rounded mr-2"></div>
+                        <span className="text-sm">Booked</span>
+                      </div>
+                    </div>
+                    
+                    {/* Seat Selection by Class */}
+                    {Object.entries(seats).map(([classType, seatsList]) => (
+                      <div key={classType} className="mb-8">
+                        <h3 className="font-medium text-lg mb-3">{classType} Class</h3>
+                        <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
+                          {seatsList.map(seat => (
+                            <button
+                              key={seat.id}
+                              type="button"
+                              className={`
+                                p-2 rounded text-center text-sm
+                                ${seat.isBooked ? 
+                                  'bg-gray-200 text-gray-500 cursor-not-allowed' : 
+                                  selectedSeat === seat ?
+                                  'bg-blue-100 border border-blue-500' :
+                                  'bg-white border border-gray-300 hover:border-blue-500'
+                                }
+                              `}
+                              disabled={seat.isBooked}
+                              onClick={() => handleSeatSelection(seat.id, seat)}
+                            >
+                              <div>{seat.number}</div>
+                              <div className="text-xs font-medium">
+                                ${seat.totalPrice.toFixed(2)}
+                              </div>
+                              {seat.premium > 0 && (
+                                <div className="text-xs text-gray-500">
+                                  +${seat.premium.toFixed(2)}
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {selectedSeat ? (
+                      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-700">
+                          You've selected a seat with a base price of ${basePrice.toFixed(2)} 
+                          {premiumPrice > 0 ? ` and a premium of $${premiumPrice.toFixed(2)}` : ''}.
+                          Total: <span className="font-semibold">${(basePrice + premiumPrice).toFixed(2)}</span>
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-sm text-yellow-700">
+                          Please select a seat to continue with your booking.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">Passenger Information</h2>
                 

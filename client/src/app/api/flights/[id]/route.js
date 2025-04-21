@@ -3,7 +3,9 @@ import db from '@/utils/db';
 
 export async function GET(request, { params }) {
   try {
-    const flightId = params.id;
+    // Await params before accessing its properties
+    const { id } = await params;
+    const flightId = id;
     
     // Query to get detailed flight information
     const [rows] = await db.execute(`

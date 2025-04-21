@@ -13,12 +13,13 @@ export async function DELETE(request, { params }) {
 
         const userData = JSON.parse(authCookie.value);
         const userId = userData.id;
-        const passengerId = params.id;
+        
+        const id = params.id;
         
         // Check if passenger exists and belongs to user
         const [passengers] = await db.execute(
             'SELECT passenger_id FROM Passenger WHERE passenger_id = ? AND user_id = ?',
-            [passengerId, userId]
+            [id, userId]
         );
         
         if (passengers.length === 0) {
@@ -30,7 +31,7 @@ export async function DELETE(request, { params }) {
         // Check if passenger is used in any bookings
         const [bookings] = await db.execute(
             'SELECT booking_id FROM Booking WHERE passenger_id = ?',
-            [passengerId]
+            [id]
         );
         
         if (bookings.length > 0) {
@@ -42,7 +43,7 @@ export async function DELETE(request, { params }) {
         // Delete passenger
         await db.execute(
             'DELETE FROM Passenger WHERE passenger_id = ?',
-            [passengerId]
+            [id]
         );
         
         return NextResponse.json({ success: true });
