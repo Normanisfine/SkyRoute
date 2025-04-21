@@ -91,4 +91,151 @@ export async function GET(request) {
             { status: 500 }
         );
     }
+}
+
+export async function POST(request) {
+  try {
+    const body = await request.json();
+    const { 
+      flightId, 
+      passenger, 
+      passengerId, 
+      paymentMethod, 
+      priceId 
+    } = body;
+
+    // Get a connection from the pool for transaction
+    const connection = await db.getConnection();
+    
+    try {
+      // Start transaction
+      await connection.beginTransaction();
+      
+      let actualPassengerId;
+      
+      // If this is a new passenger or 'self', we need to either use the user's ID directly
+      // or create a new passenger record
+      if (passengerId === 'self') {
+        // Get the current user ID from the session
+        const [userRows] = await connection.execute(
+          'SELECT user_id FROM AirlineUser WHERE email = ?',
+          [passenger.email]
+        );
+        
+        if (userRows.length === 0) {
+          throw new Error('User not found');
+        }
+        
+        const userId = userRows[0].user_id;
+        
+        // Check if this user already has a passenger record with this passport number
+        const [existingPassenger] = await connection.execute(
+          'SELECT passenger_id FROM Passenger WHERE user_id = ? AND passport_number = ?',
+          [userId, passenger.passportNumber]
+        );
+        
+        if (existingPassenger.length > 0) {
+          // Use existing passenger ID
+          actualPassengerId = existingPassenger[0].passenger_id;
+        } else {
+          // Create a new passenger record
+          const fullName = `${passenger.firstName} ${passenger.lastName}`;
+          const [newPassenger] = await connection.execute(
+            'INSERT INTO Passenger (user_id, name, passport_number) VALUES (?, ?, ?)',
+            [userId, fullName, passenger.passportNumber]
+          );
+          
+          actualPassengerId = newPassenger.insertId;
+        }
+      } else {
+        // Use the provided passenger ID
+        actualPassengerId = passengerId;
+      }
+
+      // 1. Update the Price status to 'Booked'
+      await connection.execute(`
+        UPDATE Price 
+        SET status = 'Booked' 
+        WHERE price_id = ?
+      `, [priceId]);
+
+      // Get user ID
+      const [userRows] = await connection.execute(
+        'SELECT user_id FROM AirlineUser WHERE email = ?',
+        [passenger.email]
+      );
+      
+      if (userRows.length === 0) {
+        throw new Error('User not found');
+      }
+      
+      const userId = userRows[0].user_id;
+
+      // 2. Create a new Booking record
+      const bookingTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+      const [bookingResult] = await connection.execute(`
+        INSERT INTO Booking (
+          user_id, 
+          passenger_id, 
+          price_id, 
+          booking_time, 
+          status
+        ) VALUES (?, ?, ?, ?, 'Unpaid')
+      `, [userId, actualPassengerId, priceId, bookingTime]);
+
+      const bookingId = bookingResult.insertId;
+
+      // 3. Create a Payment record
+      const paymentMethodMap = {
+        credit: 'Credit Card',
+        paypal: 'PayPal',
+        alipay: 'Alipay'
+      };
+
+      await connection.execute(`
+        INSERT INTO Payment (
+          booking_id, 
+          payment_method, 
+          payment_status
+        ) VALUES (?, ?, 'Pending')
+      `, [bookingId, paymentMethodMap[paymentMethod] || 'Credit Card']);
+
+      // 4. Update booking status to paid (in a real app, this would be done after payment processing)
+      await connection.execute(`
+        UPDATE Booking
+        SET status = 'Paid'
+        WHERE booking_id = ?
+      `, [bookingId]);
+
+      // 5. Update payment status to completed (in a real app, this would happen after payment confirmation)
+      await connection.execute(`
+        UPDATE Payment
+        SET payment_status = 'Completed'
+        WHERE booking_id = ?
+      `, [bookingId]);
+
+      // Commit the transaction
+      await connection.commit();
+      
+      // Return the booking ID
+      return NextResponse.json({ 
+        success: true, 
+        bookingId: bookingId 
+      }, { status: 201 });
+
+    } catch (error) {
+      // Rollback in case of error
+      await connection.rollback();
+      throw error;
+    } finally {
+      // Release connection back to the pool
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error creating booking:', error);
+    return NextResponse.json({ 
+      error: 'Failed to create booking',
+      details: error.message
+    }, { status: 500 });
+  }
 } 

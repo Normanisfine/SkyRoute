@@ -265,13 +265,22 @@ const BookingPage = () => {
       setSubmitLoading(true);
       setError(null);
       
+      // Get the full name for the passenger
+      const fullName = `${bookingForm.firstName} ${bookingForm.lastName}`.trim();
+      
       // Prepare booking data
       const bookingData = {
         flightId: flightData.id,
-        passenger: bookingForm,
+        passenger: {
+          firstName: bookingForm.firstName,
+          lastName: bookingForm.lastName,
+          email: bookingForm.email,
+          phone: bookingForm.phone,
+          passportNumber: bookingForm.passportNumber
+        },
         passengerId: selectedPassenger !== 'self' ? selectedPassenger : 'self',
         paymentMethod,
-        priceId: selectedSeat.priceId  // Include the price ID from the selected seat
+        priceId: selectedSeat.priceId
       };
       
       // Call API to create booking
@@ -288,8 +297,10 @@ const BookingPage = () => {
         throw new Error(errorData.error || 'Failed to book flight');
       }
       
-      // On success, redirect to bookings page
-      router.push('/bookings');
+      const result = await response.json();
+      
+      // Show success message and redirect to bookings page
+      router.push('/bookings?success=true&id=' + result.bookingId);
     } catch (error) {
       console.error('Error booking flight:', error);
       setError(error.message || 'Failed to book flight. Please try again.');
