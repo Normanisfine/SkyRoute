@@ -4,7 +4,7 @@ import db from '@/utils/db';
 
 export async function GET() {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const authCookie = cookieStore.get('auth');
     
     if (!authCookie) {
@@ -17,6 +17,7 @@ export async function GET() {
     const [rows] = await db.execute(`
       SELECT 
         sf.saved_flight_id,
+        sf.flight_id,
         f.flight_number,
         dep.airport_name as departure_airport,
         dep.iata_code as departure_code,
@@ -47,9 +48,57 @@ export async function GET() {
   }
 }
 
+export async function POST(request) {
+  try {
+    const cookieStore = await cookies();
+    const authCookie = cookieStore.get('auth');
+    
+    if (!authCookie) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userData = JSON.parse(authCookie.value);
+    const userId = userData.id;
+    
+    const { flightId } = await request.json();
+    
+    // Check if flight is already saved
+    const [existingRows] = await db.execute(
+      'SELECT saved_flight_id FROM Saved_Flights WHERE user_id = ? AND flight_id = ?',
+      [userId, flightId]
+    );
+    
+    if (existingRows.length > 0) {
+      return NextResponse.json({
+        success: true,
+        message: 'Flight already saved',
+        savedFlightId: existingRows[0].saved_flight_id
+      });
+    }
+    
+    // Save the flight
+    const savedTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    const [result] = await db.execute(
+      'INSERT INTO Saved_Flights (user_id, flight_id, saved_time) VALUES (?, ?, ?)',
+      [userId, flightId, savedTime]
+    );
+    
+    return NextResponse.json({
+      success: true,
+      savedFlightId: result.insertId
+    });
+  } catch (error) {
+    console.error('Error saving flight:', error);
+    return NextResponse.json({ 
+      error: 'Failed to save flight',
+      details: error.message
+    }, { status: 500 });
+  }
+}
+
 export async function DELETE(request) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const authCookie = cookieStore.get('auth');
     
     if (!authCookie) {

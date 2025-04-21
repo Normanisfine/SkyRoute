@@ -18,6 +18,12 @@ const PlaneIcon = () => (
   </svg>
 );
 
+const BookmarkIcon = ({ filled }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+  </svg>
+);
+
 // Add new status badge component
 const StatusBadge = ({ status }) => {
   const getStatusColor = (status) => {
@@ -54,6 +60,8 @@ const SearchResultPage = () => {
     status: '' // Add status filter
   });
   const [error, setError] = useState(null);
+  const [savedFlights, setSavedFlights] = useState(new Set());
+  const [savingFlightId, setSavingFlightId] = useState(null);
 
   const origin = searchParams.get('origin');
   const destination = searchParams.get('destination');
@@ -106,16 +114,34 @@ const SearchResultPage = () => {
           stops: 0,
           status: flight.status,
           availableSeats: flight.availableSeats,
-          seatClass: flight.seatClass
+          seatClass: flight.seatClass,
+          departureDateTime: flight.departureDateTime,
+          arrivalDateTime: flight.arrivalDateTime
         }));
 
         setFlights(formattedFlights);
         setFilteredFlights(formattedFlights);
+        
+        // Fetch saved flights for the current user
+        fetchSavedFlights();
       } catch (error) {
         console.error('Error searching flights:', error);
         setError('Failed to load flights. Please try again later.');
       } finally {
         setLoading(false);
+      }
+    };
+    
+    const fetchSavedFlights = async () => {
+      try {
+        const response = await fetch('/api/flights/saved');
+        if (response.ok) {
+          const data = await response.json();
+          // Create a Set of saved flight IDs for easy lookup
+          setSavedFlights(new Set(data.map(flight => flight.flight_id)));
+        }
+      } catch (error) {
+        console.error('Error fetching saved flights:', error);
       }
     };
 
@@ -201,6 +227,36 @@ const SearchResultPage = () => {
 
   const handleBookFlight = (flightId) => {
     router.push(`/bookings/new?flightId=${flightId}`);
+  };
+  
+  const handleSaveFlight = async (flightId) => {
+    try {
+      // Set this flight as currently saving
+      setSavingFlightId(flightId);
+      
+      const response = await fetch('/api/flights/saved', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ flightId }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save flight');
+      }
+      
+      // Update the saved flights set
+      setSavedFlights(prev => new Set([...prev, flightId]));
+      
+      // Optional: Show toast/feedback
+    } catch (error) {
+      console.error('Error saving flight:', error);
+      // Optional: Show error toast/feedback
+    } finally {
+      // Remove the saving state
+      setSavingFlightId(null);
+    }
   };
 
   return (
@@ -391,16 +447,41 @@ const SearchResultPage = () => {
                           </div>
                         </div>
 
-                        <button
-                          onClick={() => handleBookFlight(flight.id)}
-                          disabled={flight.status?.toLowerCase() === 'cancelled'}
-                          className={`mt-3 sm:mt-0 w-full sm:w-auto px-6 py-2 font-medium rounded-lg transition-colors
-                            ${flight.status?.toLowerCase() === 'cancelled' 
-                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                              : 'bg-blue-600 text-white hover:bg-blue-700'}`}
-                        >
-                          {flight.status?.toLowerCase() === 'cancelled' ? 'Unavailable' : 'Book Now'}
-                        </button>
+                        <div className="flex mt-3 sm:mt-0 w-full sm:w-auto gap-2">
+                          {/* Save Flight Button */}
+                          <button
+                            onClick={() => handleSaveFlight(flight.id)}
+                            disabled={savedFlights.has(flight.id) || savingFlightId === flight.id}
+                            className={`
+                              px-3 py-2 rounded-lg flex items-center justify-center
+                              ${savedFlights.has(flight.id) 
+                                ? 'bg-gray-100 text-gray-700' 
+                                : 'bg-white border border-blue-500 text-blue-600 hover:bg-blue-50'
+                              }
+                            `}
+                          >
+                            <BookmarkIcon filled={savedFlights.has(flight.id)} />
+                            <span className="ml-1">
+                              {savingFlightId === flight.id ? 'Saving...' : 
+                               savedFlights.has(flight.id) ? 'Saved' : 'Save'}
+                            </span>
+                          </button>
+                          
+                          {/* Book Now Button */}
+                          <button
+                            onClick={() => handleBookFlight(flight.id)}
+                            disabled={flight.status?.toLowerCase() === 'cancelled'}
+                            className={`
+                              flex-grow px-6 py-2 font-medium rounded-lg transition-colors
+                              ${flight.status?.toLowerCase() === 'cancelled' 
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                              }
+                            `}
+                          >
+                            {flight.status?.toLowerCase() === 'cancelled' ? 'Unavailable' : 'Book Now'}
+                          </button>
+                        </div>
                       </div>
 
                       {/* Show delay warning if applicable */}

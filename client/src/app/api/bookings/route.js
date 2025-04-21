@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import db from '@/utils/db';
 
-export async function GET(request) {
+export async function GET() {
     try {
         // Get user ID from auth cookie
-        const authCookie = cookies().get('auth');
+        const cookieStore = await cookies();
+        const authCookie = cookieStore.get('auth');
+        
         if (!authCookie) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -86,10 +88,7 @@ export async function GET(request) {
         return NextResponse.json(bookings);
     } catch (error) {
         console.error('Error fetching bookings:', error);
-        return NextResponse.json(
-            { error: 'Failed to fetch bookings' },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 
