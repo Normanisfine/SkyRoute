@@ -18,6 +18,12 @@ const PlaneIcon = () => (
   </svg>
 );
 
+const BookmarkIcon = ({ filled }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+  </svg>
+);
+
 // Add new status badge component
 const StatusBadge = ({ status }) => {
   const getStatusColor = (status) => {
@@ -54,6 +60,8 @@ const SearchResultPage = () => {
     status: '' // Add status filter
   });
   const [error, setError] = useState(null);
+  const [savedFlights, setSavedFlights] = useState(new Set());
+  const [savingFlightId, setSavingFlightId] = useState(null);
 
   const origin = searchParams.get('origin');
   const destination = searchParams.get('destination');
@@ -101,21 +109,39 @@ const SearchResultPage = () => {
             minute: '2-digit',
             hour12: true
           }),
-          price: flight.lowestPrice,
+          price: flight.price,
           duration: calculateDuration(flight.departureDateTime, flight.arrivalDateTime),
           stops: 0,
           status: flight.status,
           availableSeats: flight.availableSeats,
-          seatClass: flight.seatClass
+          seatClass: flight.seatClass,
+          departureDateTime: flight.departureDateTime,
+          arrivalDateTime: flight.arrivalDateTime
         }));
 
         setFlights(formattedFlights);
         setFilteredFlights(formattedFlights);
+        
+        // Fetch saved flights for the current user
+        fetchSavedFlights();
       } catch (error) {
         console.error('Error searching flights:', error);
         setError('Failed to load flights. Please try again later.');
       } finally {
         setLoading(false);
+      }
+    };
+    
+    const fetchSavedFlights = async () => {
+      try {
+        const response = await fetch('/api/flights/saved');
+        if (response.ok) {
+          const data = await response.json();
+          // Create a Set of saved flight IDs for easy lookup
+          setSavedFlights(new Set(data.map(flight => flight.flight_id)));
+        }
+      } catch (error) {
+        console.error('Error fetching saved flights:', error);
       }
     };
 
@@ -144,41 +170,43 @@ const SearchResultPage = () => {
   useEffect(() => {
     let result = [...flights];
 
-    // 航空公司筛选
+    // Airline filter
     if (filters.airline) {
       result = result.filter(flight =>
         flight.airline.toLowerCase().includes(filters.airline.toLowerCase())
       );
     }
 
-    // 价格筛选 - 最低价
+    // Price filter - min price
     if (filters.minPrice) {
-      result = result.filter(flight => flight.price >= parseInt(filters.minPrice));
+      const minPrice = parseFloat(filters.minPrice);
+      result = result.filter(flight => flight.price >= minPrice);
     }
 
-    // 价格筛选 - 最高价
+    // Price filter - max price
     if (filters.maxPrice) {
-      result = result.filter(flight => flight.price <= parseInt(filters.maxPrice));
+      const maxPrice = parseFloat(filters.maxPrice);
+      result = result.filter(flight => flight.price <= maxPrice);
     }
 
-    // 出发时间筛选
+    // Departure time filter
     if (filters.departureTime) {
       switch (filters.departureTime) {
         case 'morning':
           result = result.filter(flight => {
-            const hour = parseInt(flight.departureTime.split(':')[0]);
+            const hour = new Date(flight.departureDateTime).getHours();
             return hour >= 5 && hour < 12;
           });
           break;
         case 'afternoon':
           result = result.filter(flight => {
-            const hour = parseInt(flight.departureTime.split(':')[0]);
+            const hour = new Date(flight.departureDateTime).getHours();
             return hour >= 12 && hour < 18;
           });
           break;
         case 'evening':
           result = result.filter(flight => {
-            const hour = parseInt(flight.departureTime.split(':')[0]);
+            const hour = new Date(flight.departureDateTime).getHours();
             return hour >= 18 || hour < 5;
           });
           break;
@@ -187,7 +215,7 @@ const SearchResultPage = () => {
       }
     }
 
-    // Add status filter
+    // Status filter
     if (filters.status) {
       result = result.filter(flight => 
         flight.status?.toLowerCase() === filters.status.toLowerCase()
@@ -199,6 +227,36 @@ const SearchResultPage = () => {
 
   const handleBookFlight = (flightId) => {
     router.push(`/bookings/new?flightId=${flightId}`);
+  };
+  
+  const handleSaveFlight = async (flightId) => {
+    try {
+      // Set this flight as currently saving
+      setSavingFlightId(flightId);
+      
+      const response = await fetch('/api/flights/saved', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ flightId }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save flight');
+      }
+      
+      // Update the saved flights set
+      setSavedFlights(prev => new Set([...prev, flightId]));
+      
+      // Optional: Show toast/feedback
+    } catch (error) {
+      console.error('Error saving flight:', error);
+      // Optional: Show error toast/feedback
+    } finally {
+      // Remove the saving state
+      setSavingFlightId(null);
+    }
   };
 
   return (
@@ -276,27 +334,33 @@ const SearchResultPage = () => {
                 </select>
               </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price Range</label>
+              <div className="mb-6">
+                <h3 className="font-medium mb-2">Price Range</h3>
                 <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="number"
-                    name="minPrice"
-                    value={filters.minPrice}
-                    onChange={handleFilterChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Min"
-                    min="0"
-                  />
-                  <input
-                    type="number"
-                    name="maxPrice"
-                    value={filters.maxPrice}
-                    onChange={handleFilterChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Max"
-                    min="0"
-                  />
+                  <div>
+                    <label className="text-sm text-gray-600 block mb-1">Min ($)</label>
+                    <input
+                      type="number"
+                      name="minPrice"
+                      value={filters.minPrice}
+                      onChange={handleFilterChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="Min"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-600 block mb-1">Max ($)</label>
+                    <input
+                      type="number"
+                      name="maxPrice"
+                      value={filters.maxPrice}
+                      onChange={handleFilterChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="Max"
+                      min="0"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -383,16 +447,41 @@ const SearchResultPage = () => {
                           </div>
                         </div>
 
-                        <button
-                          onClick={() => handleBookFlight(flight.id)}
-                          disabled={flight.status?.toLowerCase() === 'cancelled'}
-                          className={`mt-3 sm:mt-0 w-full sm:w-auto px-6 py-2 font-medium rounded-lg transition-colors
-                            ${flight.status?.toLowerCase() === 'cancelled' 
-                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                              : 'bg-blue-600 text-white hover:bg-blue-700'}`}
-                        >
-                          {flight.status?.toLowerCase() === 'cancelled' ? 'Unavailable' : 'Book Now'}
-                        </button>
+                        <div className="flex mt-3 sm:mt-0 w-full sm:w-auto gap-2">
+                          {/* Save Flight Button */}
+                          <button
+                            onClick={() => handleSaveFlight(flight.id)}
+                            disabled={savedFlights.has(flight.id) || savingFlightId === flight.id}
+                            className={`
+                              px-3 py-2 rounded-lg flex items-center justify-center
+                              ${savedFlights.has(flight.id) 
+                                ? 'bg-gray-100 text-gray-700' 
+                                : 'bg-white border border-blue-500 text-blue-600 hover:bg-blue-50'
+                              }
+                            `}
+                          >
+                            <BookmarkIcon filled={savedFlights.has(flight.id)} />
+                            <span className="ml-1">
+                              {savingFlightId === flight.id ? 'Saving...' : 
+                               savedFlights.has(flight.id) ? 'Saved' : 'Save'}
+                            </span>
+                          </button>
+                          
+                          {/* Book Now Button */}
+                          <button
+                            onClick={() => handleBookFlight(flight.id)}
+                            disabled={flight.status?.toLowerCase() === 'cancelled'}
+                            className={`
+                              flex-grow px-6 py-2 font-medium rounded-lg transition-colors
+                              ${flight.status?.toLowerCase() === 'cancelled' 
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                              }
+                            `}
+                          >
+                            {flight.status?.toLowerCase() === 'cancelled' ? 'Unavailable' : 'Book Now'}
+                          </button>
+                        </div>
                       </div>
 
                       {/* Show delay warning if applicable */}

@@ -4,10 +4,11 @@ import db from '@/utils/db';
 // GET specific flight status
 export async function GET(request, { params }) {
   try {
+    const id = params.id;
     const [rows] = await db.execute(`
       SELECT * FROM Flight_Status 
       WHERE flight_id = ?
-    `, [params.id]);
+    `, [id]);
     return NextResponse.json(rows[0]);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -17,7 +18,7 @@ export async function GET(request, { params }) {
 // PUT (update) flight status
 export async function PUT(request, { params }) {
   try {
-    const id = await params.id; // Await the params
+    const id = params.id;
     const { status, lastUpdated } = await request.json();
     const [result] = await db.execute(`
       UPDATE Flight_Status 
@@ -33,7 +34,7 @@ export async function PUT(request, { params }) {
 // DELETE flight status
 export async function DELETE(request, { params }) {
   try {
-    const id = await params.id; // Await the params
+    const id = params.id;
     const [result] = await db.execute(`
       DELETE FROM Flight_Status 
       WHERE flight_id = ?

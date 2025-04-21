@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 const AdminPage = () => {
   const [activeTab, setActiveTab] = useState('flights'); // 'flights', 'airports', 'airlines', 'seats', 'prices', 'aircraft'
@@ -662,6 +663,98 @@ const AdminPage = () => {
     color: '#444'
   };
 
+  // Add this function at the top of your component, after your state declarations
+  const exportData = (data, filename) => {
+    try {
+      // Convert data to JSON string
+      const jsonString = JSON.stringify(data, null, 2);
+      
+      // Create a blob with the data
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      
+      // Create a URL for the blob
+      const url = URL.createObjectURL(blob);
+      
+      // Create a temporary link element
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.json`;
+      
+      // Append the link to the body
+      document.body.appendChild(a);
+      
+      // Click the link to trigger the download
+      a.click();
+      
+      // Clean up
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      alert(`Successfully exported ${filename}`);
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      alert('Failed to export data');
+    }
+  };
+
+  // Add this function to export data as CSV
+  const exportCSV = (data, filename) => {
+    try {
+      // Get headers from the first object
+      if (!data || data.length === 0) {
+        alert('No data to export');
+        return;
+      }
+      
+      const headers = Object.keys(data[0]);
+      
+      // Create CSV string with headers
+      let csvContent = headers.join(',') + '\n';
+      
+      // Add data rows
+      data.forEach(item => {
+        const row = headers.map(header => {
+          // Handle null or undefined values
+          const value = item[header] === null || item[header] === undefined ? '' : item[header];
+          
+          // Handle values that might contain commas or quotes
+          if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
+            return `"${value.replace(/"/g, '""')}"`;
+          }
+          return value;
+        });
+        
+        csvContent += row.join(',') + '\n';
+      });
+      
+      // Create a blob with the CSV data
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      
+      // Create a URL for the blob
+      const url = URL.createObjectURL(blob);
+      
+      // Create a temporary link element
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.csv`;
+      
+      // Append the link to the body
+      document.body.appendChild(a);
+      
+      // Click the link to trigger the download
+      a.click();
+      
+      // Clean up
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      alert(`Successfully exported ${filename}`);
+    } catch (error) {
+      console.error('Error exporting CSV data:', error);
+      alert('Failed to export CSV data');
+    }
+  };
+
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
       <h1 style={{ marginBottom: '30px', color: '#333' }}>Admin Dashboard</h1>
@@ -908,6 +1001,24 @@ const AdminPage = () => {
             }}>
               <h2 style={{ marginBottom: '20px', color: '#333' }}>Manage Flights</h2>
 
+              <div className="mb-4 flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Flight Management</h2>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => exportData(flights, 'flights_export')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    Export as JSON
+                  </button>
+                  <button
+                    onClick={() => exportCSV(flights, 'flights_export')}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  >
+                    Export as CSV
+                  </button>
+                </div>
+              </div>
+
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
@@ -1075,6 +1186,24 @@ const AdminPage = () => {
             }}>
               <h2 style={{ marginBottom: '20px', color: '#333' }}>Manage Airports</h2>
 
+              <div className="mb-4 flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Airport Management</h2>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => exportData(airports, 'airports_export')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    Export as JSON
+                  </button>
+                  <button
+                    onClick={() => exportCSV(airports, 'airports_export')}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  >
+                    Export as CSV
+                  </button>
+                </div>
+              </div>
+
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
@@ -1188,6 +1317,24 @@ const AdminPage = () => {
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <h2 style={{ marginBottom: '20px', color: '#333' }}>Manage Airlines</h2>
+
+              <div className="mb-4 flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Airline Management</h2>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => exportData(airlines, 'airlines_export')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    Export as JSON
+                  </button>
+                  <button
+                    onClick={() => exportCSV(airlines, 'airlines_export')}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  >
+                    Export as CSV
+                  </button>
+                </div>
+              </div>
 
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
@@ -1347,6 +1494,24 @@ const AdminPage = () => {
             }}>
               <h2 style={{ marginBottom: '20px', color: '#333' }}>Manage Aircraft</h2>
 
+              <div className="mb-4 flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Aircraft Management</h2>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => exportData(aircraft, 'aircraft_export')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    Export as JSON
+                  </button>
+                  <button
+                    onClick={() => exportCSV(aircraft, 'aircraft_export')}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  >
+                    Export as CSV
+                  </button>
+                </div>
+              </div>
+
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
@@ -1480,6 +1645,24 @@ const AdminPage = () => {
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <h2 style={{ marginBottom: '20px', color: '#333' }}>Manage Seats</h2>
+
+              <div className="mb-4 flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Seat Management</h2>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => exportData(seats, 'seats_export')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    Export as JSON
+                  </button>
+                  <button
+                    onClick={() => exportCSV(seats, 'seats_export')}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  >
+                    Export as CSV
+                  </button>
+                </div>
+              </div>
 
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
@@ -1644,6 +1827,24 @@ const AdminPage = () => {
             }}>
               <h2 style={{ marginBottom: '20px', color: '#333' }}>Manage Prices</h2>
 
+              <div className="mb-4 flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Price Management</h2>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => exportData(prices, 'prices_export')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    Export as JSON
+                  </button>
+                  <button
+                    onClick={() => exportCSV(prices, 'prices_export')}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  >
+                    Export as CSV
+                  </button>
+                </div>
+              </div>
+
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
@@ -1687,6 +1888,23 @@ const AdminPage = () => {
           )}
         </div>
       )}
+
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Admin Actions</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Link href="/admin/export" className="block p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+            <div className="flex items-center justify-center mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </div>
+            <h3 className="font-medium text-center">Export Data</h3>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 };

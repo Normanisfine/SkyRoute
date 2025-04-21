@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import db from '@/utils/db';
 
-export async function GET() {
+export async function GET(request) {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const authCookie = cookieStore.get('auth');
         
         if (!authCookie) {
