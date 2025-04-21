@@ -23,70 +23,140 @@ const BookingPage = () => {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [flightData, setFlightData] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [savedPassengers, setSavedPassengers] = useState([]);
+  const [selectedPassenger, setSelectedPassenger] = useState('self');
   const [bookingForm, setBookingForm] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
     passportNumber: '',
-    dob: '',
-    gender: '',
-    nationality: ''
   });
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('credit');
   const [error, setError] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [loadingPassengers, setLoadingPassengers] = useState(true);
 
   // 从URL获取航班ID
   const flightId = searchParams.get('flightId');
 
   useEffect(() => {
-    const fetchFlightDetails = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        // 这里会是一个真实的API调用
-        // const response = await fetch(`/api/flights/${flightId}`);
-        // const data = await response.json();
-        // setFlightData(data);
-
-        // 模拟数据
-        setTimeout(() => {
-          // 假设这是从API获取的航班数据
-          const mockFlightData = {
-            id: flightId || 1,
-            flightNumber: 'CA980',
-            airline: 'China Eastern',
-            origin: 'PVG',
-            destination: 'JFK',
-            departureTime: '12:59 pm',
-            arrivalTime: '3:37 pm',
-            duration: '2 h 38 m',
-            price: 580,
-            date: '2024-10-15',
-            stops: 0,
-            availableSeats: ['12A', '12B', '14C', '15D', '18F'],
-            departureAirport: 'Shanghai Pudong International Airport',
-            arrivalAirport: 'John F. Kennedy International Airport'
-          };
-          setFlightData(mockFlightData);
-          setLoading(false);
-        }, 1000);
-
-      } catch (error) {
-        console.error('Error fetching flight details:', error);
+        setLoadingPassengers(true);
+        
+        // Fetch real flight data from API
+        const flightResponse = await fetch(`/api/flights/${flightId}`);
+        if (!flightResponse.ok) {
+          throw new Error('Failed to fetch flight details');
+        }
+        const flightDbData = await flightResponse.json();
+        
+        // Process flight data for display
+        const processedFlightData = {
+          id: flightDbData.flight_id,
+          flightNumber: flightDbData.flight_number,
+          airline: flightDbData.airline,
+          origin: flightDbData.origin,
+          destination: flightDbData.destination,
+          departureTime: formatTime(flightDbData.departure_time),
+          arrivalTime: formatTime(flightDbData.arrival_time),
+          duration: calculateDuration(flightDbData.departure_time, flightDbData.arrival_time),
+          price: flightDbData.basic_price,
+          date: formatDate(flightDbData.departure_time),
+          stops: 0, // Assuming direct flights for now
+          departureAirport: flightDbData.departure_airport,
+          arrivalAirport: flightDbData.arrival_airport
+        };
+        
+        setFlightData(processedFlightData);
+        
+        // Fetch user profile
+        const profileResponse = await fetch('/api/profile');
+        if (!profileResponse.ok) {
+          throw new Error('Failed to fetch profile data');
+        }
+        const profile = await profileResponse.json();
+        setUserData(profile);
+        
+        // Split name into first and last name
+        const nameParts = profile.name.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+        
+        // Pre-fill form with user data
+        setBookingForm({
+          firstName,
+          lastName,
+          email: profile.email || '',
+          phone: profile.phone || '',
+          passportNumber: profile.passport_number || '',
+        });
+        
+        // Fetch saved passengers
+        try {
+          const passengersResponse = await fetch('/api/passengers');
+          if (passengersResponse.ok) {
+            const passengers = await passengersResponse.json();
+            setSavedPassengers(passengers);
+          }
+        } catch (err) {
+          console.error('Error fetching passengers:', err);
+        }
+        
+        setLoadingPassengers(false);
         setLoading(false);
-        setError('Failed to load flight details. Please try again.');
+        
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setLoading(false);
+        setLoadingPassengers(false);
+        setError('Failed to load data. Please try again.');
       }
     };
 
     if (flightId) {
-      fetchFlightDetails();
+      fetchData();
     } else {
-      // 如果没有航班ID，重定向到搜索页面
+      // Redirect to search page if no flight ID
       router.push('/flights');
     }
   }, [flightId, router]);
+
+  // Helper functions for formatting data
+  const formatTime = (dateTimeString) => {
+    if (!dateTimeString) return '';
+    
+    const date = new Date(dateTimeString);
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    }).toLowerCase();
+  };
+  
+  const formatDate = (dateTimeString) => {
+    if (!dateTimeString) return '';
+    
+    const date = new Date(dateTimeString);
+    return date.toISOString().split('T')[0];
+  };
+  
+  const calculateDuration = (departureTime, arrivalTime) => {
+    if (!departureTime || !arrivalTime) return '';
+    
+    const departure = new Date(departureTime);
+    const arrival = new Date(arrivalTime);
+    const durationMs = arrival - departure;
+    
+    const hours = Math.floor(durationMs / (1000 * 60 * 60));
+    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return `${hours}h ${minutes}m`;
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -94,6 +164,44 @@ const BookingPage = () => {
       ...prev,
       [name]: value
     }));
+  };
+  
+  const handlePassengerChange = (e) => {
+    const selectedValue = e.target.value;
+    setSelectedPassenger(selectedValue);
+    
+    if (selectedValue === 'self') {
+      // Fill form with user's own information
+      if (userData) {
+        const nameParts = userData.name.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+        
+        setBookingForm({
+          firstName,
+          lastName,
+          email: userData.email || '',
+          phone: userData.phone || '',
+          passportNumber: userData.passport_number || '',
+        });
+      }
+    } else {
+      // Fill form with selected passenger's information
+      const passenger = savedPassengers.find(p => p.id.toString() === selectedValue);
+      if (passenger) {
+        const nameParts = passenger.name.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+        
+        setBookingForm({
+          firstName,
+          lastName,
+          email: userData?.email || '', // Use user's email
+          phone: userData?.phone || '',
+          passportNumber: passenger.passport_number || '',
+        });
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -107,30 +215,33 @@ const BookingPage = () => {
       setSubmitLoading(true);
       setError(null);
       
-      // 在这里调用API创建订单
-      // const response = await fetch('/api/bookings', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     flightId,
-      //     passenger: bookingForm,
-      //     paymentMethod
-      //   }),
-      // });
+      // Prepare booking data
+      const bookingData = {
+        flightId: flightData.id,
+        passenger: bookingForm,
+        passengerId: selectedPassenger !== 'self' ? selectedPassenger : 'self',
+        paymentMethod
+      };
       
-      // if (!response.ok) throw new Error('Failed to book flight');
-      // const data = await response.json();
-
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Call API to create booking
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingData),
+      });
       
-      // 预订成功，转到订单页面
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to book flight');
+      }
+      
+      // On success, redirect to bookings page
       router.push('/bookings');
     } catch (error) {
       console.error('Error booking flight:', error);
-      setError('Failed to book flight. Please try again.');
+      setError(error.message || 'Failed to book flight. Please try again.');
     } finally {
       setSubmitLoading(false);
     }
@@ -226,6 +337,37 @@ const BookingPage = () => {
               <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">Passenger Information</h2>
                 
+                {/* Passenger selection dropdown */}
+                <div className="mb-6">
+                  <label htmlFor="passengerSelect" className="block text-sm font-medium text-gray-700 mb-1">
+                    Select Passenger
+                  </label>
+                  {loadingPassengers ? (
+                    <div className="py-2 text-gray-500">Loading passengers...</div>
+                  ) : (
+                    <>
+                      <select
+                        id="passengerSelect"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={selectedPassenger}
+                        onChange={handlePassengerChange}
+                      >
+                        <option value="self">Myself</option>
+                        {savedPassengers.map(passenger => (
+                          <option key={passenger.id} value={passenger.id.toString()}>
+                            {passenger.name} ({passenger.passport_number})
+                          </option>
+                        ))}
+                      </select>
+                      <div className="mt-2 text-sm text-gray-500">
+                        <Link href="/profile" className="text-blue-600 hover:text-blue-800">
+                          Manage saved passengers
+                        </Link>
+                      </div>
+                    </>
+                  )}
+                </div>
+                
                 <form onSubmit={handleSubmit}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
@@ -281,7 +423,7 @@ const BookingPage = () => {
                     </div>
                   </div>
 
-                  <div className="mb-4">
+                  <div className="mb-6">
                     <label htmlFor="passportNumber" className="block text-sm font-medium text-gray-700 mb-1">Passport Number</label>
                     <input
                       type="text"
@@ -292,58 +434,6 @@ const BookingPage = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
                     />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div>
-                      <label htmlFor="dob" className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                      <input
-                        type="date"
-                        id="dob"
-                        name="dob"
-                        value={bookingForm.dob}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                      <select
-                        id="gender"
-                        name="gender"
-                        value={bookingForm.gender}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                      >
-                        <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
-                      <select
-                        id="nationality"
-                        name="nationality"
-                        value={bookingForm.nationality}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                      >
-                        <option value="">Select Nationality</option>
-                        <option value="US">United States</option>
-                        <option value="CN">China</option>
-                        <option value="GB">United Kingdom</option>
-                        <option value="JP">Japan</option>
-                        <option value="CA">Canada</option>
-                        <option value="AU">Australia</option>
-                        <option value="FR">France</option>
-                        <option value="DE">Germany</option>
-                      </select>
-                    </div>
                   </div>
 
                   {/* 支付方式 */}
@@ -401,42 +491,35 @@ const BookingPage = () => {
                     </div>
                   </div>
 
-                  {/* 条款和条件 */}
                   <div className="mb-6">
-                    <div className="flex items-start">
+                    <div className="flex items-center">
                       <input
                         type="checkbox"
-                        id="agreeTerms"
+                        id="terms"
                         checked={agreeTerms}
-                        onChange={() => setAgreeTerms(!agreeTerms)}
-                        className="mt-1 mr-2"
-                        required
+                        onChange={(e) => setAgreeTerms(e.target.checked)}
+                        className="mr-2"
                       />
-                      <label htmlFor="agreeTerms" className="text-sm text-gray-600">
-                        I agree to the <Link href="/terms" className="text-blue-600 hover:underline">Terms and Conditions</Link> and <Link href="/privacy" className="text-blue-600 hover:underline">Privacy Policy</Link>.
+                      <label htmlFor="terms" className="text-sm text-gray-700">
+                        I agree to the <a href="#" className="text-blue-600 hover:underline">terms and conditions</a>
                       </label>
                     </div>
                   </div>
 
-                  {/* 提交按钮 */}
-                  <div className="flex justify-between items-center mt-8">
-                    <div className="text-xl font-bold text-gray-800">
-                      Total: <span className="text-blue-600">${flightData.price}</span>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => router.back()}
+                      className="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Back
+                    </button>
                     <button
                       type="submit"
+                      className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                       disabled={submitLoading}
-                      className={`px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors ${submitLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
-                      {submitLoading ? (
-                        <span className="flex items-center">
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Processing...
-                        </span>
-                      ) : 'Confirm Booking'}
+                      {submitLoading ? 'Processing...' : 'Confirm and Pay'}
                     </button>
                   </div>
                 </form>

@@ -13,7 +13,7 @@ export async function GET(request) {
             return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
         }
 
-        // Modified query to properly check seat availability from Price table
+        // Updated query to only use basic_price from Flight table
         const [rows] = await db.execute(`
             SELECT 
                 f.flight_id as id,
@@ -27,9 +27,7 @@ export async function GET(request) {
                 arr.city as destinationCity,
                 al.airline_name as airline,
                 fs.status as flightStatus,
-                s.class_type as seatClass,
-                COUNT(DISTINCT CASE WHEN p.status = 'Available' THEN p.price_id END) as availableSeats,
-                MIN(CASE WHEN p.status = 'Available' THEN p.premium_price END) as lowestPrice
+                COUNT(DISTINCT CASE WHEN p.status = 'Available' THEN p.price_id END) as availableSeats
             FROM 
                 Flight f
                 JOIN Airport dep ON f.departure_airport_id = dep.airport_id
@@ -37,14 +35,12 @@ export async function GET(request) {
                 JOIN Airline al ON f.airline_id = al.airline_id
                 LEFT JOIN Flight_Status fs ON f.flight_id = fs.flight_id
                 LEFT JOIN Price p ON f.flight_id = p.flight_id
-                LEFT JOIN Seat s ON p.seat_id = s.seat_id
             WHERE 
                 (dep.iata_code = ? OR LOWER(dep.city) = LOWER(?))
                 AND (arr.iata_code = ? OR LOWER(arr.city) = LOWER(?))
                 AND DATE(f.departure_time) >= ?
                 ${returnDate ? 'AND DATE(f.departure_time) <= ?' : ''}
                 AND fs.status != 'Cancelled'
-                AND p.status = 'Available'
             GROUP BY 
                 f.flight_id,
                 f.flight_number,
@@ -56,18 +52,17 @@ export async function GET(request) {
                 arr.iata_code,
                 arr.city,
                 al.airline_name,
-                fs.status,
-                s.class_type
+                fs.status
             HAVING 
                 availableSeats > 0
             ORDER BY 
-                f.departure_time, lowestPrice
+                f.departure_time, f.basic_price
         `, returnDate 
            ? [originInput, originInput, destinationInput, destinationInput, departDate, returnDate]
            : [originInput, originInput, destinationInput, destinationInput, departDate]
         );
 
-        // Transform the data
+        // Transform the data - only using basic_price from Flight
         const flights = rows.map(row => ({
             id: row.id,
             flightNumber: row.flightNumber,
@@ -80,11 +75,9 @@ export async function GET(request) {
             arrivalDateTime: row.arrivalDateTime,
             departureTime: row.departureDateTime,
             arrivalTime: row.arrivalDateTime,
-            basePrice: parseFloat(row.basePrice),
-            lowestPrice: row.lowestPrice ? parseFloat(row.lowestPrice) : parseFloat(row.basePrice),
+            price: parseFloat(row.basePrice), // Just use the basic price directly
             status: row.flightStatus,
-            availableSeats: parseInt(row.availableSeats),
-            seatClass: row.seatClass
+            availableSeats: parseInt(row.availableSeats)
         }));
 
         return NextResponse.json(flights);

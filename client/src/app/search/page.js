@@ -101,7 +101,7 @@ const SearchResultPage = () => {
             minute: '2-digit',
             hour12: true
           }),
-          price: flight.lowestPrice,
+          price: flight.price,
           duration: calculateDuration(flight.departureDateTime, flight.arrivalDateTime),
           stops: 0,
           status: flight.status,

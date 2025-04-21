@@ -19,7 +19,6 @@ const SearchPage = () => {
     destination: '',
     departDate: '',
     returnDate: '',
-    passengers: 1,
     class: 'Economy'
   });
 
@@ -37,6 +36,7 @@ const SearchPage = () => {
       origin: searchForm.origin,
       destination: searchForm.destination,
       departDate: searchForm.departDate,
+      class: searchForm.class,
       ...(searchForm.returnDate && { returnDate: searchForm.returnDate })
     });
     router.push(`/search?${searchParams.toString()}`);
@@ -95,7 +95,7 @@ const SearchPage = () => {
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-4 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Departure Date</label>
                   <input
@@ -120,35 +120,19 @@ const SearchPage = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label htmlFor="passengers" className="block text-sm font-medium text-gray-700 mb-1">Passengers</label>
-                  <select
-                    id="passengers"
-                    name="passengers"
-                    value={searchForm.passengers}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                      <option key={num} value={num}>{num} Passenger{num > 1 ? 's' : ''}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="class" className="block text-sm font-medium text-gray-700 mb-1">Class</label>
-                  <select
-                    id="class"
-                    name="class"
-                    value={searchForm.class}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="Economy">Economy</option>
-                    <option value="Business">Business</option>
-                    <option value="First">First Class</option>
-                  </select>
-                </div>
+              <div className="mb-6">
+                <label htmlFor="class" className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+                <select
+                  id="class"
+                  name="class"
+                  value={searchForm.class}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Economy">Economy</option>
+                  <option value="Business">Business</option>
+                  <option value="First">First Class</option>
+                </select>
               </div>
 
               <button
