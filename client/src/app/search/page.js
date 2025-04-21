@@ -144,41 +144,43 @@ const SearchResultPage = () => {
   useEffect(() => {
     let result = [...flights];
 
-    // 航空公司筛选
+    // Airline filter
     if (filters.airline) {
       result = result.filter(flight =>
         flight.airline.toLowerCase().includes(filters.airline.toLowerCase())
       );
     }
 
-    // 价格筛选 - 最低价
+    // Price filter - min price
     if (filters.minPrice) {
-      result = result.filter(flight => flight.price >= parseInt(filters.minPrice));
+      const minPrice = parseFloat(filters.minPrice);
+      result = result.filter(flight => flight.price >= minPrice);
     }
 
-    // 价格筛选 - 最高价
+    // Price filter - max price
     if (filters.maxPrice) {
-      result = result.filter(flight => flight.price <= parseInt(filters.maxPrice));
+      const maxPrice = parseFloat(filters.maxPrice);
+      result = result.filter(flight => flight.price <= maxPrice);
     }
 
-    // 出发时间筛选
+    // Departure time filter
     if (filters.departureTime) {
       switch (filters.departureTime) {
         case 'morning':
           result = result.filter(flight => {
-            const hour = parseInt(flight.departureTime.split(':')[0]);
+            const hour = new Date(flight.departureDateTime).getHours();
             return hour >= 5 && hour < 12;
           });
           break;
         case 'afternoon':
           result = result.filter(flight => {
-            const hour = parseInt(flight.departureTime.split(':')[0]);
+            const hour = new Date(flight.departureDateTime).getHours();
             return hour >= 12 && hour < 18;
           });
           break;
         case 'evening':
           result = result.filter(flight => {
-            const hour = parseInt(flight.departureTime.split(':')[0]);
+            const hour = new Date(flight.departureDateTime).getHours();
             return hour >= 18 || hour < 5;
           });
           break;
@@ -187,7 +189,7 @@ const SearchResultPage = () => {
       }
     }
 
-    // Add status filter
+    // Status filter
     if (filters.status) {
       result = result.filter(flight => 
         flight.status?.toLowerCase() === filters.status.toLowerCase()
@@ -276,27 +278,33 @@ const SearchResultPage = () => {
                 </select>
               </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price Range</label>
+              <div className="mb-6">
+                <h3 className="font-medium mb-2">Price Range</h3>
                 <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="number"
-                    name="minPrice"
-                    value={filters.minPrice}
-                    onChange={handleFilterChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Min"
-                    min="0"
-                  />
-                  <input
-                    type="number"
-                    name="maxPrice"
-                    value={filters.maxPrice}
-                    onChange={handleFilterChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Max"
-                    min="0"
-                  />
+                  <div>
+                    <label className="text-sm text-gray-600 block mb-1">Min ($)</label>
+                    <input
+                      type="number"
+                      name="minPrice"
+                      value={filters.minPrice}
+                      onChange={handleFilterChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="Min"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-600 block mb-1">Max ($)</label>
+                    <input
+                      type="number"
+                      name="maxPrice"
+                      value={filters.maxPrice}
+                      onChange={handleFilterChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="Max"
+                      min="0"
+                    />
+                  </div>
                 </div>
               </div>
 
