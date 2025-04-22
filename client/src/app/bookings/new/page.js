@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -18,9 +18,10 @@ const PlaneIcon = () => (
   </svg>
 );
 
-const BookingPage = () => {
-  const router = useRouter();
+// Create a component that uses search params
+const NewBookingForm = () => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [flightData, setFlightData] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -683,4 +684,22 @@ const BookingPage = () => {
   );
 };
 
-export default BookingPage; 
+// Main component with Suspense boundary
+const NewBookingPage = () => {
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* Static parts like navigation, headers, etc. */}
+      
+      {/* Wrap the dynamic part with Suspense */}
+      <Suspense fallback={
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      }>
+        <NewBookingForm />
+      </Suspense>
+    </div>
+  );
+};
+
+export default NewBookingPage; 
