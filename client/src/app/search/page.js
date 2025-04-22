@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -46,7 +46,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const SearchResultPage = () => {
+const SearchResults = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -498,6 +498,38 @@ const SearchResultPage = () => {
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+// Main component with Suspense boundary
+const SearchResultPage = () => {
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* Navigation bar and other static elements */}
+      <nav className="bg-white shadow-sm">
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+          <Link href="/" className="text-2xl font-bold text-blue-600 flex items-center">
+            <span className="font-black">Sk.</span>
+          </Link>
+          <div className="flex items-center space-x-6">
+            <Link href="/flights" className="text-blue-600 font-medium">Flights</Link>
+            <Link href="/bookings" className="text-gray-600 hover:text-blue-600 font-medium">My Orders</Link>
+            <Link href="/profile" className="text-gray-600 hover:text-blue-600">
+              <UserIcon />
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Wrap the dynamic part with Suspense */}
+      <Suspense fallback={
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      }>
+        <SearchResults />
+      </Suspense>
     </div>
   );
 };
