@@ -1,7 +1,35 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import db from '@/utils/db';
 
+// Helper function to check admin role
+async function checkAdminRole(request) {
+  const cookieStore = cookies();
+  const authCookie = cookieStore.get('auth');
+  
+  if (!authCookie) {
+    return false;
+  }
+  
+  try {
+    const userData = JSON.parse(authCookie.value);
+    return userData.role === 'admin';
+  } catch (error) {
+    console.error('Failed to parse auth cookie:', error);
+    return false;
+  }
+}
+
 export async function POST(request) {
+  // Check if user is admin
+  const isAdmin = await checkAdminRole(request);
+  if (!isAdmin) {
+    return NextResponse.json(
+      { error: 'Forbidden - Admin access required' },
+      { status: 403 }
+    );
+  }
+  
   const connection = await db.getConnection();
   
   try {
@@ -67,7 +95,16 @@ export async function POST(request) {
   }
 }
 
-export async function GET() {
+export async function GET(request) {
+  // Check if user is admin
+  const isAdmin = await checkAdminRole(request);
+  if (!isAdmin) {
+    return NextResponse.json(
+      { error: 'Forbidden - Admin access required' },
+      { status: 403 }
+    );
+  }
+  
   try {
     const [rows] = await db.execute(`
       SELECT DISTINCT

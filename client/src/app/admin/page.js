@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const AdminPage = () => {
+  const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('flights'); // 'flights', 'airports', 'airlines', 'seats', 'prices', 'aircraft'
   const [airports, setAirports] = useState([]);
   const [airlines, setAirlines] = useState([]);
@@ -140,6 +144,43 @@ const AdminPage = () => {
 
     fetchData();
   }, []);
+
+  // Add admin check on client side too
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        // Try to access admin API as a quick check
+        const response = await fetch('/api/admin/check-role');
+        if (!response.ok) {
+          // If response is not OK, redirect to home
+          router.replace('/?error=unauthorized');
+          return;
+        }
+        
+        setIsAdmin(true);
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        router.replace('/?error=unauthorized');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    checkAdminStatus();
+  }, [router]);
+  
+  // If still loading or not admin, show loading or empty
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+  
+  if (!isAdmin) {
+    return null; // This will never render as we redirect, but good practice
+  }
 
   const handleFlightSubmit = async (e) => {
     e.preventDefault();
