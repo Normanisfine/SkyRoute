@@ -261,24 +261,8 @@ const SearchResults = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* 导航栏 */}
-      <nav className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-blue-600 flex items-center">
-            <span className="font-black">Sk.</span>
-          </Link>
-          <div className="flex items-center space-x-6">
-            <Link href="/flights" className="text-blue-600 font-medium">Flights</Link>
-            <Link href="/bookings" className="text-gray-600 hover:text-blue-600 font-medium">My Orders</Link>
-            <Link href="/profile" className="text-gray-600 hover:text-blue-600">
-              <UserIcon />
-            </Link>
-          </div>
-        </div>
-      </nav>
-
       <div className="container mx-auto px-4 py-8">
-        {/* 搜索摘要 */}
+        {/* Search summary */}
         <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex justify-between items-center">
           <div>
             <div className="text-xl font-bold flex items-center">
@@ -302,7 +286,7 @@ const SearchResults = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* 筛选侧边栏 */}
+          {/* Filter sidebar and flight list */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm p-4 sticky top-4">
               <h2 className="text-xl font-semibold mb-4">Filters</h2>
@@ -381,7 +365,7 @@ const SearchResults = () => {
             </div>
           </div>
 
-          {/* 航班列表 */}
+          {/* Flight list */}
           <div className="lg:col-span-3">
             {loading ? (
               <div className="flex justify-center items-center py-12">
@@ -506,7 +490,6 @@ const SearchResults = () => {
 const SearchResultPage = () => {
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Navigation bar and other static elements */}
       <nav className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold text-blue-600 flex items-center">
@@ -522,7 +505,6 @@ const SearchResultPage = () => {
         </div>
       </nav>
 
-      {/* Wrap the dynamic part with Suspense */}
       <Suspense fallback={
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import db from '@/utils/db';
+import { executeQuery, executeTransaction } from '@/utils/dbUtils';
 
 export async function GET() {
     try {
@@ -15,79 +15,79 @@ export async function GET() {
         const userData = JSON.parse(authCookie.value);
         const userId = userData.id;
 
-        // Updated query to calculate total price
-        const [rows] = await db.execute(`
-            SELECT 
-                b.booking_id as id,
-                b.booking_time,
-                b.status as bookingStatus,
-                f.flight_number as flightNumber,
-                f.departure_time as departureDateTime,
-                f.arrival_time as arrivalDateTime,
-                f.basic_price as basePrice,
-                pr.premium_price as premiumPrice,
-                (f.basic_price + pr.premium_price) as totalPrice,
-                dep.iata_code as origin,
-                arr.iata_code as destination,
-                p.name as passenger,
-                s.seat_number as seat,
-                s.class_type as classType,
-                al.airline_name as airline,
-                fs.status as flightStatus
-            FROM 
-                Booking b
-                JOIN Price pr ON b.price_id = pr.price_id
-                JOIN Flight f ON pr.flight_id = f.flight_id
-                JOIN Airport dep ON f.departure_airport_id = dep.airport_id
-                JOIN Airport arr ON f.arrival_airport_id = arr.airport_id
-                JOIN Passenger p ON b.passenger_id = p.passenger_id
-                JOIN Seat s ON pr.seat_id = s.seat_id
-                JOIN Aircraft ac ON s.aircraft_id = ac.aircraft_id
-                JOIN Airline al ON f.airline_id = al.airline_id
-                LEFT JOIN Flight_Status fs ON f.flight_id = fs.flight_id
-            WHERE 
-                b.user_id = ?
-            ORDER BY 
-                b.booking_time DESC
-        `, [userId]);
+        // Use executeQuery to safely handle the connection
+        const bookings = await executeQuery(async (connection) => {
+            const [rows] = await connection.execute(`
+                SELECT 
+                    b.booking_id as id,
+                    b.booking_time,
+                    b.status as bookingStatus,
+                    f.flight_number as flightNumber,
+                    f.departure_time as departureDateTime,
+                    f.arrival_time as arrivalDateTime,
+                    f.basic_price as basePrice,
+                    pr.premium_price as premiumPrice,
+                    (f.basic_price + pr.premium_price) as totalPrice,
+                    dep.iata_code as origin,
+                    arr.iata_code as destination,
+                    p.name as passenger,
+                    s.seat_number as seat,
+                    s.class_type as classType,
+                    al.airline_name as airline,
+                    fs.status as flightStatus
+                FROM 
+                    Booking b
+                    JOIN Price pr ON b.price_id = pr.price_id
+                    JOIN Flight f ON pr.flight_id = f.flight_id
+                    JOIN Airport dep ON f.departure_airport_id = dep.airport_id
+                    JOIN Airport arr ON f.arrival_airport_id = arr.airport_id
+                    JOIN Passenger p ON b.passenger_id = p.passenger_id
+                    JOIN Seat s ON pr.seat_id = s.seat_id
+                    JOIN Aircraft ac ON s.aircraft_id = ac.aircraft_id
+                    JOIN Airline al ON f.airline_id = al.airline_id
+                    LEFT JOIN Flight_Status fs ON f.flight_id = fs.flight_id
+                WHERE 
+                    b.user_id = ?
+                ORDER BY 
+                    b.booking_time DESC
+            `, [userId]);
 
-        // Transform the data to match the frontend requirements
-        const bookings = rows.map(row => {
-            const departureTime = new Date(row.departureDateTime);
-            const arrivalTime = new Date(row.arrivalDateTime);
-            const durationMs = arrivalTime - departureTime;
-            const hours = Math.floor(durationMs / (1000 * 60 * 60));
-            const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+            // Transform the data to match the frontend requirements
+            return rows.map(row => {
+                const departureTime = new Date(row.departureDateTime);
+                const arrivalTime = new Date(row.arrivalDateTime);
+                const durationMs = arrivalTime - departureTime;
+                const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
 
-            return {
-                id: row.id,
-                flightNumber: row.flightNumber,
-                origin: row.origin,
-                destination: row.destination,
-                departureTime: departureTime.toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                }).toLowerCase(),
-                arrivalTime: arrivalTime.toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                }).toLowerCase(),
-                duration: `${hours}h ${minutes}m`,
-                passenger: row.passenger,
-                seat: row.seat,
-                date: departureTime.toISOString().split('T')[0],
-                status: row.bookingStatus,
-                airline: row.airline,
-                // Use totalPrice instead of just premium price
-                price: row.totalPrice,
-                // Include base and premium price separately for detailed display
-                basePrice: row.basePrice,
-                premiumPrice: row.premiumPrice,
-                classType: row.classType,
-                flightStatus: row.flightStatus
-            };
+                return {
+                    id: row.id,
+                    flightNumber: row.flightNumber,
+                    origin: row.origin,
+                    destination: row.destination,
+                    departureTime: departureTime.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    }).toLowerCase(),
+                    arrivalTime: arrivalTime.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    }).toLowerCase(),
+                    duration: `${hours}h ${minutes}m`,
+                    passenger: row.passenger,
+                    seat: row.seat,
+                    date: departureTime.toISOString().split('T')[0],
+                    status: row.bookingStatus,
+                    airline: row.airline,
+                    price: row.totalPrice,
+                    basePrice: row.basePrice,
+                    premiumPrice: row.premiumPrice,
+                    classType: row.classType,
+                    flightStatus: row.flightStatus
+                };
+            });
         });
 
         return NextResponse.json(bookings);
@@ -108,13 +108,8 @@ export async function POST(request) {
       priceId 
     } = body;
 
-    // Get a connection from the pool for transaction
-    const connection = await db.getConnection();
-    
-    try {
-      // Start transaction
-      await connection.beginTransaction();
-      
+    // Use executeTransaction to handle the transaction and connection management
+    const result = await executeTransaction(async (connection) => {
       let actualPassengerId;
       
       // If this is a new passenger or 'self', we need to either use the user's ID directly
@@ -217,24 +212,16 @@ export async function POST(request) {
         SET payment_status = 'Completed'
         WHERE booking_id = ?
       `, [bookingId]);
-
-      // Commit the transaction
-      await connection.commit();
       
       // Return the booking ID
-      return NextResponse.json({ 
-        success: true, 
-        bookingId: bookingId 
-      }, { status: 201 });
-
-    } catch (error) {
-      // Rollback in case of error
-      await connection.rollback();
-      throw error;
-    } finally {
-      // Release connection back to the pool
-      connection.release();
-    }
+      return { bookingId };
+    });
+    
+    return NextResponse.json({ 
+      success: true, 
+      bookingId: result.bookingId 
+    }, { status: 201 });
+    
   } catch (error) {
     console.error('Error creating booking:', error);
     return NextResponse.json({ 

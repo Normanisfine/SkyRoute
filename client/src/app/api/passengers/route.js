@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import db from '@/utils/db';
+import { executeQuery } from '@/utils/dbUtils';
 
 export async function GET(request) {
     try {
@@ -14,19 +14,24 @@ export async function GET(request) {
         const userData = JSON.parse(authCookie.value);
         const userId = userData.id;
 
-        // Query uses dob column name
-        const [rows] = await db.execute(`
-            SELECT 
-                passenger_id as id,
-                name,
-                passport_number,
-                dob
-            FROM Passenger
-            WHERE user_id = ?
-            ORDER BY name
-        `, [userId]);
+        // Use executeQuery to properly manage connections
+        const passengers = await executeQuery(async (connection) => {
+            // Query uses dob column name
+            const [rows] = await connection.execute(`
+                SELECT 
+                    passenger_id as id,
+                    name,
+                    passport_number,
+                    dob
+                FROM Passenger
+                WHERE user_id = ?
+                ORDER BY name
+            `, [userId]);
 
-        return NextResponse.json(rows);
+            return rows;
+        });
+
+        return NextResponse.json(passengers);
     } catch (error) {
         console.error('Error fetching passengers:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -35,7 +40,7 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const authCookie = cookieStore.get('auth');
         
         if (!authCookie) {
@@ -54,23 +59,16 @@ export async function POST(request) {
             }, { status: 400 });
         }
         
-        // Check if passport number already exists
-        const [existingPassengers] = await db.execute(
-            'SELECT passenger_id FROM Passenger WHERE passport_number = ?',
-            [passport_number]
-        );
-        
-        if (existingPassengers.length > 0) {
-            return NextResponse.json({ 
-                error: 'A passenger with this passport number already exists'
-            }, { status: 409 });
-        }
-        
-        // Insert query uses dob column name
-        const [result] = await db.execute(
-            'INSERT INTO Passenger (user_id, name, passport_number, dob) VALUES (?, ?, ?, ?)',
-            [userId, name, passport_number, dob]
-        );
+        // Use executeQuery to properly manage connections
+        const result = await executeQuery(async (connection) => {
+            // Insert query uses dob column name
+            const [result] = await connection.execute(
+                'INSERT INTO Passenger (user_id, name, passport_number, dob) VALUES (?, ?, ?, ?)',
+                [userId, name, passport_number, dob]
+            );
+            
+            return { insertId: result.insertId };
+        });
         
         // Return the new passenger with ID
         return NextResponse.json({

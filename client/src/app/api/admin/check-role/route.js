@@ -20,17 +20,8 @@ async function checkAdminRole() {
 }
 
 export async function GET() {
-  // Check if user is admin
-  const isAdmin = await checkAdminRole();
-  if (!isAdmin) {
-    return NextResponse.json(
-      { error: 'Forbidden - Admin access required' },
-      { status: 403 }
-    );
-  }
-  
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const authCookie = cookieStore.get('auth');
     
     if (!authCookie) {
@@ -41,6 +32,14 @@ export async function GET() {
     }
     
     const userData = JSON.parse(authCookie.value);
+    const isAdmin = userData.role === 'admin';
+    
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: 'Forbidden - Admin access required' },
+        { status: 403 }
+      );
+    }
     
     return NextResponse.json({ isAdmin: true });
   } catch (error) {
