@@ -1,53 +1,51 @@
 import { NextResponse } from 'next/server';
-import db from '@/utils/db';
+import { executeQuery } from '@/utils/dbUtils';
 
 // GET - 获取所有航空器
 export async function GET() {
   try {
-    const [rows] = await db.execute(`
-      SELECT a.*, al.airline_name 
-      FROM Aircraft a
-      LEFT JOIN Airline al ON a.airline_id = al.airline_id
-    `);
-    return NextResponse.json(rows);
+    const aircraft = await executeQuery(async (connection) => {
+      const [rows] = await connection.execute(`
+        SELECT 
+          a.*, 
+          al.airline_name 
+        FROM Aircraft a
+        JOIN Airline al ON a.airline_id = al.airline_id
+      `);
+      return rows;
+    });
+    
+    return NextResponse.json(aircraft);
   } catch (error) {
     console.error('Error fetching aircraft:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch aircraft' },
+      { status: 500 }
+    );
   }
 }
 
 // POST - 创建新航空器
 export async function POST(request) {
   try {
-    const data = await request.json();
-    const { model, totalSeats, airlineId } = data;
-
-    // 验证必填字段
-    if (!model || !totalSeats || !airlineId) {
-      return NextResponse.json(
-        { error: 'Model, total seats and airline ID are required' },
-        { status: 400 }
+    const { model, totalSeats, airlineId } = await request.json();
+    
+    const result = await executeQuery(async (connection) => {
+      const [result] = await connection.execute(
+        'INSERT INTO Aircraft (model, total_seats, airline_id) VALUES (?, ?, ?)',
+        [model, totalSeats, airlineId]
       );
-    }
+      return { aircraftId: result.insertId };
+    });
 
-    const connection = await mysql.createConnection(dbConfig);
-
-    // 插入航空器数据
-    const [result] = await connection.execute(
-      'INSERT INTO Aircraft (model, total_seats, airline_id) VALUES (?, ?, ?)',
-      [model, totalSeats, airlineId]
-    );
-
-    await connection.end();
-
-    return NextResponse.json({
-      message: 'Aircraft created successfully',
-      aircraft_id: result.insertId
-    }, { status: 201 });
+    return NextResponse.json({ 
+      success: true, 
+      aircraftId: result.aircraftId 
+    });
   } catch (error) {
-    console.error('Error creating aircraft:', error);
+    console.error('Error adding aircraft:', error);
     return NextResponse.json(
-      { error: 'Failed to create aircraft' },
+      { error: 'Failed to add aircraft' },
       { status: 500 }
     );
   }

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import db from '@/utils/db';
+import { executeQuery, executeTransaction } from '@/utils/dbUtils';
 
 export async function DELETE(request, { params }) {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const authCookie = cookieStore.get('auth');
         
         if (!authCookie) {
@@ -16,35 +16,48 @@ export async function DELETE(request, { params }) {
         
         const id = params.id;
         
-        // Check if passenger exists and belongs to user
-        const [passengers] = await db.execute(
-            'SELECT passenger_id FROM Passenger WHERE passenger_id = ? AND user_id = ?',
-            [id, userId]
-        );
+        // Use executeTransaction for this multi-step operation
+        const result = await executeTransaction(async (connection) => {
+            // Check if passenger exists and belongs to user
+            const [passengers] = await connection.execute(
+                'SELECT passenger_id FROM Passenger WHERE passenger_id = ? AND user_id = ?',
+                [id, userId]
+            );
+            
+            if (passengers.length === 0) {
+                return { error: 'not_found' };
+            }
+            
+            // Check if passenger is used in any bookings
+            const [bookings] = await connection.execute(
+                'SELECT booking_id FROM Booking WHERE passenger_id = ?',
+                [id]
+            );
+            
+            if (bookings.length > 0) {
+                return { error: 'has_bookings' };
+            }
+            
+            // Delete passenger
+            await connection.execute(
+                'DELETE FROM Passenger WHERE passenger_id = ?',
+                [id]
+            );
+            
+            return { success: true };
+        });
         
-        if (passengers.length === 0) {
+        if (result.error === 'not_found') {
             return NextResponse.json({ 
                 error: 'Passenger not found or you do not have permission to delete it'
             }, { status: 404 });
         }
         
-        // Check if passenger is used in any bookings
-        const [bookings] = await db.execute(
-            'SELECT booking_id FROM Booking WHERE passenger_id = ?',
-            [id]
-        );
-        
-        if (bookings.length > 0) {
+        if (result.error === 'has_bookings') {
             return NextResponse.json({ 
                 error: 'Cannot delete passenger with existing bookings'
             }, { status: 409 });
         }
-        
-        // Delete passenger
-        await db.execute(
-            'DELETE FROM Passenger WHERE passenger_id = ?',
-            [id]
-        );
         
         return NextResponse.json({ success: true });
     } catch (error) {

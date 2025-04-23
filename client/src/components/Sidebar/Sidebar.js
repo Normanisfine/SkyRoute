@@ -1,11 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { PlaneTakeoff, ClipboardList, User } from 'lucide-react';
+import { PlaneTakeoff, ClipboardList, User, Settings } from 'lucide-react';
 
 export default function Sidebar() {
   const [activeIcon, setActiveIcon] = useState('home');
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Check if the user has admin role
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const response = await fetch('/api/auth/check-role');
+        if (response.ok) {
+          const data = await response.json();
+          setIsAdmin(data.isAdmin);
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+      }
+    };
+    
+    checkAdminStatus();
+  }, []);
   
   return (
     <div className="h-screen bg-gray-300 w-32 flex flex-col items-center pt-10">
@@ -20,6 +38,7 @@ export default function Sidebar() {
           <div 
             className={`p-4 rounded-md cursor-pointer hover:bg-gray-200 ${activeIcon === 'home' ? 'bg-white' : ''}`}
             onClick={() => setActiveIcon('home')}
+            title="Search Flights"
           >
             <PlaneTakeoff/>
           </div>
@@ -29,6 +48,7 @@ export default function Sidebar() {
           <div 
             className={`p-4 rounded-md cursor-pointer hover:bg-gray-200 ${activeIcon === 'bookings' ? 'bg-white' : ''}`}
             onClick={() => setActiveIcon('bookings')}
+            title="My Bookings"
           >
             <ClipboardList/>
           </div>
@@ -38,10 +58,25 @@ export default function Sidebar() {
           <div 
             className={`p-4 rounded-md cursor-pointer hover:bg-gray-200 ${activeIcon === 'profile' ? 'bg-white' : ''}`}
             onClick={() => setActiveIcon('profile')}
+            title="My Profile"
           >
             <User/>
           </div>
         </Link>
+        
+        {/* Admin button - only visible for admin users */}
+        {isAdmin && (
+          <Link href="/admin">
+            <div 
+              className={`p-4 rounded-md cursor-pointer hover:bg-gray-200 ${activeIcon === 'admin' ? 'bg-white' : 'bg-gray-300'}`}
+              onClick={() => setActiveIcon('admin')}
+              title="Admin Dashboard"
+            >
+              <Settings className="mx-auto"/>
+              <span className="text-xs block mt-1 text-center">Admin</span>
+            </div>
+          </Link>
+        )}
       </div>
     </div>
   );

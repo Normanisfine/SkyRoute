@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const AdminPage = () => {
+  const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('flights'); // 'flights', 'airports', 'airlines', 'seats', 'prices', 'aircraft'
   const [airports, setAirports] = useState([]);
   const [airlines, setAirlines] = useState([]);
@@ -87,15 +91,23 @@ const AdminPage = () => {
 
   // Add this function at the top of your component
   const removeDuplicateFlights = (flights) => {
+    if (!Array.isArray(flights)) {
+      console.error('Expected flights to be an array, got:', typeof flights);
+      return [];
+    }
+    
     const seen = new Set();
     return flights.filter(flight => {
+      if (!flight || typeof flight !== 'object' || !('flight_id' in flight)) {
+        return false; // Skip invalid flight objects
+      }
       const duplicate = seen.has(flight.flight_id);
       seen.add(flight.flight_id);
       return !duplicate;
     });
   };
 
-  // Modify your useEffect where you set the flights
+  // Modify your useEffect to handle potential non-array responses for all data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -109,37 +121,101 @@ const AdminPage = () => {
           fetch('/api/admin/flight-status')
         ]);
 
-        const airportsData = await airportsRes.json();
-        const airlinesData = await airlinesRes.json();
-        const aircraftData = await aircraftRes.json();
-        const flightsData = await flightsRes.json();
-        const seatsData = await seatsRes.json();
-        const pricesData = await pricesRes.json();
-        const flightStatusData = await flightStatusRes.json();
+        // Safely parse and ensure each response is an array
+        const airportsData = airportsRes.ok ? await airportsRes.json() : [];
+        const airlinesData = airlinesRes.ok ? await airlinesRes.json() : [];
+        const aircraftData = aircraftRes.ok ? await aircraftRes.json() : [];
+        const flightsData = flightsRes.ok ? await flightsRes.json() : [];
+        const seatsData = seatsRes.ok ? await seatsRes.json() : [];
+        const pricesData = pricesRes.ok ? await pricesRes.json() : [];
+        const flightStatusData = flightStatusRes.ok ? await flightStatusRes.json() : [];
 
-        // Remove duplicates before setting state
-        const uniqueFlights = removeDuplicateFlights(flightsData);
-
-        setAirports(airportsData);
-        setAirlines(airlinesData);
-        setAircraft(aircraftData);
-        setFlights(uniqueFlights); // Set unique flights
-        setSeats(seatsData);
-        setPrices(pricesData);
+        // Ensure all data arrays are actually arrays
+        setAirports(Array.isArray(airportsData) ? airportsData : []);
+        setAirlines(Array.isArray(airlinesData) ? airlinesData : []);
+        setAircraft(Array.isArray(aircraftData) ? aircraftData : []);
+        
+        // Remove duplicates from flights if it's an array
+        const flightsArray = Array.isArray(flightsData) ? flightsData : [];
+        const uniqueFlights = removeDuplicateFlights(flightsArray);
+        setFlights(uniqueFlights);
+        
+        // Ensure seats is an array
+        setSeats(Array.isArray(seatsData) ? seatsData : []);
+        
+        // Ensure prices is an array
+        setPrices(Array.isArray(pricesData) ? pricesData : []);
 
         // Convert flight status array to object for easier lookup
         const statusObj = {};
-        flightStatusData.forEach(status => {
-          statusObj[status.flight_id] = status;
-        });
+        if (Array.isArray(flightStatusData)) {
+          flightStatusData.forEach(status => {
+            statusObj[status.flight_id] = status;
+          });
+        }
         setFlightStatuses(statusObj);
+        
+        console.log('Data loaded successfully:', {
+          airports: Array.isArray(airportsData),
+          airlines: Array.isArray(airlinesData),
+          aircraft: Array.isArray(aircraftData),
+          flights: Array.isArray(flightsData),
+          seats: Array.isArray(seatsData),
+          prices: Array.isArray(pricesData),
+          flightStatus: Array.isArray(flightStatusData)
+        });
       } catch (error) {
         console.error('Error fetching data:', error);
+        // Set defaults for state variables in case of error
+        setAirports([]);
+        setAirlines([]);
+        setAircraft([]);
+        setFlights([]);
+        setSeats([]);
+        setPrices([]);
+        setFlightStatuses({});
       }
     };
 
     fetchData();
   }, []);
+
+  // Add admin check on client side too
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        // Try to access admin API as a quick check
+        const response = await fetch('/api/admin/check-role');
+        if (!response.ok) {
+          // If response is not OK, redirect to home
+          router.replace('/?error=unauthorized');
+          return;
+        }
+        
+        setIsAdmin(true);
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        router.replace('/?error=unauthorized');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    checkAdminStatus();
+  }, [router]);
+  
+  // If still loading or not admin, show loading or empty
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+  
+  if (!isAdmin) {
+    return null; // This will never render as we redirect, but good practice
+  }
 
   const handleFlightSubmit = async (e) => {
     e.preventDefault();
@@ -1856,32 +1932,38 @@ const AdminPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {prices?.map(price => (
+                  {Array.isArray(prices) ? prices.map(price => (
                     <tr key={price.price_id}>
                       <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                        {flights.find(f => f.flight_id === price.flight_id)?.flight_number}
+                        {Array.isArray(flights) && price && price.flight_id 
+                          ? flights.find(f => f && f.flight_id === price.flight_id)?.flight_number || 'Unknown'
+                          : 'Unknown'
+                        }
                       </td>
                       <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                        {seats.find(s => s.seat_id === price.seat_id)?.seat_number}
+                        {Array.isArray(seats) && price && price.seat_id
+                          ? seats.find(s => s && s.seat_id === price.seat_id)?.seat_number || 'Unknown'
+                          : 'Unknown'
+                        }
                       </td>
                       <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>${price.premium_price}</td>
                       <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{price.status}</td>
                       <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
                         <button
                           onClick={() => handleEditPrice(price)}
-                          style={{ marginRight: '10px', padding: '5px 10px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '3px' }}
+                          style={{ marginRight: '10px', padding: '5px 10px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDeletePrice(price.price_id)}
-                          style={{ padding: '5px 10px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '3px' }}
+                          style={{ padding: '5px 10px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                         >
                           Delete
                         </button>
                       </td>
                     </tr>
-                  ))}
+                  )) : <tr><td colSpan="6">No price data available</td></tr>}
                 </tbody>
               </table>
             </div>

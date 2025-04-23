@@ -1,23 +1,30 @@
 // src/app/api/login/route.js
 import { cookies } from 'next/headers';
-import db from '../../../utils/db';
+import { executeQuery } from '@/utils/dbUtils';
 import bcrypt from 'bcrypt';
 
 export async function POST(request) {
   const { email, password } = await request.json();
 
   try {
-    // Query database for user by email only
-    const [users] = await db.query(
-      'SELECT * FROM AirlineUser WHERE email = ?',
-      [email]
-    );
+    // Use executeQuery to properly manage connections
+    const user = await executeQuery(async (connection) => {
+      // Query database for user by email including the role
+      const [users] = await connection.query(
+        'SELECT * FROM AirlineUser WHERE email = ?',
+        [email]
+      );
 
-    if (users.length === 0) {
+      if (users.length === 0) {
+        return null;
+      }
+
+      return users[0];
+    });
+
+    if (!user) {
       return Response.json({ message: 'Invalid email or password' }, { status: 401 });
     }
-
-    const user = users[0];
 
     // Compare password hash
     const passwordMatch = await bcrypt.compare(password, user.password);
@@ -26,11 +33,13 @@ export async function POST(request) {
       return Response.json({ message: 'Invalid email or password' }, { status: 401 });
     }
 
-    // Set authentication cookie
-    cookies().set('auth', JSON.stringify({
+    // Set authentication cookie with role information
+    const cookieStore = await cookies();
+    cookieStore.set('auth', JSON.stringify({
       id: user.user_id,
       email: user.email,
-      name: user.name
+      name: user.name,
+      role: user.role || 'customer' // Include role, default to 'customer' if not specified
     }), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
