@@ -4,7 +4,7 @@ import { executeQuery } from '@/utils/dbUtils';
 
 export async function GET(request, { params }) {
   try {
-    const bookingId = params.id;
+    const bookingId = (await params).id;
     
     // Get user ID from auth cookie
     const cookieStore = await cookies();
