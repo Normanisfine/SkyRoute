@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import db from '@/utils/db';
+import { executeQuery } from '@/utils/dbUtils';
 
 export async function PUT(request, { params }) {
   try {
@@ -20,11 +20,13 @@ export async function PUT(request, { params }) {
       );
     }
     
-    // Update the airline
-    const sql = 'UPDATE Airline SET airline_name = ?, country = ? WHERE airline_id = ?';
-    const values = [airlineName, country, airlineId];
-    
-    await db.execute(sql, values);
+    await executeQuery(async (connection) => {
+      // Update the airline
+      const sql = 'UPDATE Airline SET airline_name = ?, country = ? WHERE airline_id = ?';
+      const values = [airlineName, country, airlineId];
+      
+      await connection.execute(sql, values);
+    });
     
     // Return success response
     return NextResponse.json({ success: true, message: 'Airline updated successfully' });
@@ -41,21 +43,29 @@ export async function DELETE(request, { params }) {
   try {
     const { airlineId } = params;
     
-    // First check if there are related aircraft
-    const [checkResult] = await db.execute(
-      'SELECT COUNT(*) as count FROM Aircraft WHERE airline_id = ?',
-      [airlineId]
-    );
+    const result = await executeQuery(async (connection) => {
+      // First check if there are related aircraft
+      const [checkResult] = await connection.execute(
+        'SELECT COUNT(*) as count FROM Aircraft WHERE airline_id = ?',
+        [airlineId]
+      );
+      
+      if (checkResult[0].count > 0) {
+        return { hasRelations: true };
+      }
+      
+      const query = 'DELETE FROM Airline WHERE airline_id = ?';
+      await connection.execute(query, [airlineId]);
+      
+      return { hasRelations: false };
+    });
     
-    if (checkResult[0].count > 0) {
+    if (result.hasRelations) {
       return NextResponse.json(
         { error: 'Cannot delete airline with associated aircraft' },
         { status: 400 }
       );
     }
-    
-    const query = 'DELETE FROM Airline WHERE airline_id = ?';
-    await db.execute(query, [airlineId]);
     
     return NextResponse.json({ message: 'Airline deleted successfully' });
   } catch (error) {

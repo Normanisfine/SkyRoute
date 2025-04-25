@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import db from '@/utils/db';
+import { executeQuery } from '@/utils/dbUtils';
 
 export async function GET(request) {
   try {
@@ -134,7 +134,10 @@ async function getBookingsData(startDate, endDate) {
   
   query += ' ORDER BY b.booking_time DESC';
 
-  const [rows] = await db.execute(query, params);
+  const rows = await executeQuery(async (connection) => {
+    const [rows] = await connection.execute(query, params);
+    return rows;
+  });
   
   // Format the filename
   const dateStr = new Date().toISOString().split('T')[0];
@@ -192,7 +195,10 @@ async function getFlightsData(startDate, endDate) {
   
   query += ' ORDER BY f.departure_time';
 
-  const [rows] = await db.execute(query, params);
+  const rows = await executeQuery(async (connection) => {
+    const [rows] = await connection.execute(query, params);
+    return rows;
+  });
   
   // Format the filename
   const dateStr = new Date().toISOString().split('T')[0];
@@ -218,7 +224,10 @@ async function getPassengersData() {
     ORDER BY p.name
   `;
 
-  const [rows] = await db.execute(query);
+  const rows = await executeQuery(async (connection) => {
+    const [rows] = await connection.execute(query);
+    return rows;
+  });
   
   // Format the filename
   const dateStr = new Date().toISOString().split('T')[0];
@@ -278,7 +287,10 @@ async function getRevenueData(startDate, endDate) {
       total_revenue DESC
   `;
 
-  const [rows] = await db.execute(query, params);
+  const rows = await executeQuery(async (connection) => {
+    const [rows] = await connection.execute(query, params);
+    return rows;
+  });
   
   // Format the filename
   const dateStr = new Date().toISOString().split('T')[0];
