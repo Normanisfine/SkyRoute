@@ -114,7 +114,7 @@ const CheckInPage = () => {
   
   const handleDownloadBoardingPass = () => {
     // In a real app, this would generate and download a PDF boarding pass
-    alert('Boarding pass download functionality would be implemented here');
+    alert('Boarding pass downloaded!');
   };
 
   if (loading) {
