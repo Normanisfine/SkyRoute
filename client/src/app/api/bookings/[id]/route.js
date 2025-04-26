@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { executeQuery } from '@/utils/dbUtils';
+import { executeQuery, executeTransaction } from '@/utils/dbUtils';
 
 export async function GET(request, { params }) {
   try {
@@ -196,5 +196,115 @@ export async function GET(request, { params }) {
   } catch (error) {
     console.error('Error fetching booking details:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request, { params }) {
+  try {
+    const bookingId = (await params).id;
+    
+    // Get user ID from auth cookie
+    const cookieStore = await cookies();
+    const authCookie = cookieStore.get('auth');
+    
+    if (!authCookie) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userData = JSON.parse(authCookie.value);
+    const userId = userData.id;
+
+    // Use executeTransaction to ensure atomicity
+    const result = await executeTransaction(async (connection) => {
+      // First check if booking exists and belongs to the user
+      const [bookingRows] = await connection.execute(`
+        SELECT b.booking_id, b.price_id, b.status
+        FROM Booking b
+        WHERE b.booking_id = ? AND b.user_id = ?
+      `, [bookingId, userId]);
+
+      if (bookingRows.length === 0) {
+        return { error: 'booking_not_found' };
+      }
+
+      const booking = bookingRows[0];
+      
+      // Check if booking is already cancelled
+      if (booking.status === 'Cancelled') {
+        return { error: 'already_cancelled' };
+      }
+      
+      // Get departure time to check if cancellation is allowed
+      const [flightRows] = await connection.execute(`
+        SELECT f.departure_time
+        FROM Flight f
+        JOIN Price p ON f.flight_id = p.flight_id
+        WHERE p.price_id = ?
+      `, [booking.price_id]);
+      
+      if (flightRows.length === 0) {
+        return { error: 'flight_not_found' };
+      }
+      
+      const departureTime = new Date(flightRows[0].departure_time);
+      const currentTime = new Date();
+      
+      // Prevent cancellation if flight is less than 24 hours away
+      const hoursUntilDeparture = (departureTime - currentTime) / (1000 * 60 * 60);
+      if (hoursUntilDeparture < 24) {
+        return { error: 'cancellation_window_closed' };
+      }
+
+      // 1. Update booking status to Cancelled
+      await connection.execute(`
+        UPDATE Booking
+        SET status = 'Cancelled'
+        WHERE booking_id = ?
+      `, [bookingId]);
+
+      // 2. Set the price status back to Available
+      await connection.execute(`
+        UPDATE Price
+        SET status = 'Available'
+        WHERE price_id = ?
+      `, [booking.price_id]);
+      
+      // 3. Delete any associated luggage records
+      await connection.execute(`
+        DELETE FROM Luggage
+        WHERE booking_id = ?
+      `, [bookingId]);
+      
+      // 4. Delete any associated check-in records
+      await connection.execute(`
+        DELETE FROM Check_in
+        WHERE booking_id = ?
+      `, [bookingId]);
+
+      return { success: true };
+    });
+
+    // Handle different results
+    if (result.error) {
+      const errorMessages = {
+        'booking_not_found': 'Booking not found',
+        'already_cancelled': 'Booking is already cancelled',
+        'flight_not_found': 'Flight information not found',
+        'cancellation_window_closed': 'Cannot cancel bookings less than 24 hours before departure'
+      };
+      
+      return NextResponse.json(
+        { error: errorMessages[result.error] }, 
+        { status: result.error === 'booking_not_found' ? 404 : 400 }
+      );
+    }
+
+    return NextResponse.json({ message: 'Booking cancelled successfully' });
+  } catch (error) {
+    console.error('Error cancelling booking:', error);
+    return NextResponse.json(
+      { error: 'Failed to cancel booking' }, 
+      { status: 500 }
+    );
   }
 } 
