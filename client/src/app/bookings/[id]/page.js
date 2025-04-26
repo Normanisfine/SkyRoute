@@ -39,6 +39,9 @@ const BookingDetailsPage = () => {
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelError, setCancelError] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   useEffect(() => {
     const fetchBookingDetails = async () => {
@@ -64,6 +67,40 @@ const BookingDetailsPage = () => {
       fetchBookingDetails();
     }
   }, [params.id]);
+
+  const handleCancelBooking = async () => {
+    try {
+      setCancelLoading(true);
+      setCancelError(null);
+      
+      const response = await fetch(`/api/bookings/${params.id}`, {
+        method: 'DELETE',
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to cancel booking');
+      }
+      
+      // Update the booking status locally
+      setBooking(prev => ({
+        ...prev,
+        status: 'Cancelled'
+      }));
+      
+      // Close the modal
+      setShowCancelModal(false);
+      
+      // Show success message or redirect
+      alert('Booking cancelled successfully');
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+      setCancelError(error.message);
+    } finally {
+      setCancelLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -314,39 +351,53 @@ const BookingDetailsPage = () => {
               <div className="space-y-3">
                 <button 
                   className={`w-full py-2 px-4 rounded-lg flex items-center justify-center font-medium ${
-                    booking.checkedIn ? 'bg-green-100 text-green-700' : 'bg-blue-600 text-white hover:bg-blue-700'
+                    booking.checkedIn ? 'bg-green-100 text-green-700' : 
+                    booking.status === 'Cancelled' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' :
+                    'bg-blue-600 text-white hover:bg-blue-700'
                   }`}
-                  disabled={booking.checkedIn}
-                  onClick={() => router.push(`/checkin/${booking.id}`)}
+                  disabled={booking.checkedIn || booking.status === 'Cancelled'}
+                  onClick={() => booking.status !== 'Cancelled' && router.push(`/checkin/${booking.id}`)}
                 >
                   <TicketIcon />
                   <span className="ml-2">
-                    {booking.checkedIn ? 'Already Checked-in' : 'Check-in'}
+                    {booking.checkedIn ? 'Already Checked-in' : 
+                     booking.status === 'Cancelled' ? 'Check-in Unavailable' : 
+                     'Check-in'}
                   </span>
                 </button>
                 
                 <button 
-                  className="w-full py-2 px-4 bg-white border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 flex items-center justify-center"
-                  onClick={() => alert('Boarding pass would be downloaded here')}
+                  className={`w-full py-2 px-4 bg-white border ${
+                    booking.status === 'Cancelled' ? 
+                    'border-gray-300 text-gray-400 cursor-not-allowed' : 
+                    'border-blue-600 text-blue-600 hover:bg-blue-50'
+                  } rounded-lg font-medium flex items-center justify-center`}
+                  onClick={() => booking.status !== 'Cancelled' && alert('Boarding pass would be downloaded here')}
+                  disabled={booking.status === 'Cancelled'}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="7 10 12 15 17 10"></polyline>
                     <line x1="12" y1="15" x2="12" y2="3"></line>
                   </svg>
-                  <span className="ml-2">Download Boarding Pass</span>
+                  <span className="ml-2">
+                    {booking.status === 'Cancelled' ? 'Boarding Pass Unavailable' : 'Download Boarding Pass'}
+                  </span>
                 </button>
                 
                 {booking.status !== 'Cancelled' && (
                   <button 
-                    className="w-full py-2 px-4 bg-white border border-red-600 text-red-600 rounded-lg font-medium hover:bg-red-50 flex items-center justify-center"
-                    onClick={() => alert('Cancel booking functionality would go here')}
+                    className={`w-full py-2 px-4 bg-white border border-red-600 text-red-600 rounded-lg font-medium hover:bg-red-50 flex items-center justify-center ${cancelLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={() => setShowCancelModal(true)}
+                    disabled={cancelLoading}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="18" y1="6" x2="6" y2="18"></line>
                       <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
-                    <span className="ml-2">Cancel Booking</span>
+                    <span className="ml-2">
+                      {cancelLoading ? 'Cancelling...' : 'Cancel Booking'}
+                    </span>
                   </button>
                 )}
               </div>
@@ -521,6 +572,46 @@ const BookingDetailsPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Cancel Confirmation Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full">
+            <h3 className="text-xl font-semibold mb-4">Cancel Booking</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to cancel this booking? This action cannot be undone.
+              {booking.flight && (
+                <span className="block mt-2 font-medium">
+                  Flight {booking.flight.flightNumber} from {booking.flight.departure.city} to {booking.flight.arrival.city}
+                </span>
+              )}
+            </p>
+            
+            {cancelError && (
+              <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg">
+                {cancelError}
+              </div>
+            )}
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                onClick={() => setShowCancelModal(false)}
+                disabled={cancelLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className={`px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 ${cancelLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={handleCancelBooking}
+                disabled={cancelLoading}
+              >
+                {cancelLoading ? 'Processing...' : 'Confirm Cancellation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

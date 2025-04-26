@@ -187,114 +187,123 @@ const BookingPage = () => {
               </button>
             </div>
           ) : (
-            filteredBookings.map((booking) => {
-              // Ensure prices are numbers
-              const price = typeof booking.price === 'number' ? booking.price : parseFloat(booking.price || 0);
-              const basePrice = typeof booking.basePrice === 'number' ? booking.basePrice : parseFloat(booking.basePrice || 0);
-              const premiumPrice = typeof booking.premiumPrice === 'number' ? booking.premiumPrice : parseFloat(booking.premiumPrice || 0);
-
-              return (
-                <div key={booking.id} className="bg-white rounded-xl shadow-sm overflow-hidden transition-all hover:shadow-md">
-                  <div className="p-6">
-                    <div className="flex flex-col md:flex-row justify-between">
-                      {/* 出发和到达信息 */}
-                      <div className="flex-1 mb-4 md:mb-0">
-                        <div className="text-sm text-gray-500 mb-1">Destination</div>
-                        <div className="flex items-center">
-                          <span className="text-lg font-bold">{booking.origin}</span>
-                          <div className="mx-2 text-gray-400 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M5 12h14"></path>
-                              <path d="m12 5 7 7-7 7"></path>
-                            </svg>
-                          </div>
-                          <span className="text-lg font-bold">{booking.destination}</span>
+            filteredBookings.map((booking) => (
+              <div key={booking.id} className="bg-white rounded-xl shadow-sm overflow-hidden transition-all hover:shadow-md">
+                <div className="p-6">
+                  <div className="flex flex-col md:flex-row justify-between">
+                    {/* 出发和到达信息 */}
+                    <div className="flex-1 mb-4 md:mb-0">
+                      <div className="text-sm text-gray-500 mb-1">Destination</div>
+                      <div className="flex items-center">
+                        <span className="text-lg font-bold">{booking.origin}</span>
+                        <div className="mx-2 text-gray-400 flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 12h14"></path>
+                            <path d="m12 5 7 7-7 7"></path>
+                          </svg>
                         </div>
-                      </div>
-
-                      {/* 时间信息 */}
-                      <div className="flex-1 mb-4 md:mb-0">
-                        <div className="text-sm text-gray-500 mb-1">Time</div>
-                        <div className="text-lg font-bold">{booking.departureTime} - {booking.arrivalTime}</div>
-                      </div>
-
-                      {/* 行程时长 */}
-                      <div className="flex-1 mb-4 md:mb-0">
-                        <div className="text-sm text-gray-500 mb-1">Duration</div>
-                        <div className="text-lg font-bold flex items-center">
-                          {booking.duration}
-                          <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded">Nonstop</span>
-                        </div>
-                      </div>
-
-                      {/* 座位信息 */}
-                      <div className="flex-1 mb-4 md:mb-0">
-                        <div className="text-sm text-gray-500 mb-1">Seat</div>
-                        <div className="text-lg font-bold">{booking.seat}</div>
-                      </div>
-
-                      {/* 旅客信息 */}
-                      <div className="flex-1">
-                        <div className="text-sm text-gray-500 mb-1">Passenger</div>
-                        <div className="text-lg font-bold">{booking.passenger}</div>
+                        <span className="text-lg font-bold">{booking.destination}</span>
                       </div>
                     </div>
 
-                    {/* 底部详细信息和操作按钮 */}
-                    <div className="mt-6 pt-4 border-t border-gray-100 flex flex-wrap justify-between items-center">
-                      <div className="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-0">
-                        <div className="flex items-center mr-4 mb-2 sm:mb-0">
-                          <PlaneIcon />
-                          <span className="text-sm font-medium">{booking.flightNumber}</span>
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {new Date(booking.date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </div>
-                        {booking.isRoundTrip && (
-                          <span className="ml-3 px-2 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded">Round trip</span>
-                        )}
-                        <span className={`ml-3 px-2 py-0.5 ${booking.status === 'Confirmed' ? 'bg-emerald-100 text-emerald-800' :
-                            booking.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
-                              'bg-yellow-100 text-yellow-800'
-                          } text-xs font-medium rounded`}>
-                          {booking.status}
-                        </span>
+                    {/* 时间信息 */}
+                    <div className="flex-1 mb-4 md:mb-0">
+                      <div className="text-sm text-gray-500 mb-1">Time</div>
+                      <div className="text-lg font-bold">{booking.departureTime} - {booking.arrivalTime}</div>
+                    </div>
+
+                    {/* 行程时长 */}
+                    <div className="flex-1 mb-4 md:mb-0">
+                      <div className="text-sm text-gray-500 mb-1">Duration</div>
+                      <div className="text-lg font-bold flex items-center">
+                        {booking.duration}
+                        <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded">Nonstop</span>
                       </div>
-                      <div className="flex space-x-2">
-                        <button
-                          className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-                          onClick={() => router.push(`/bookings/${booking.id}`)}
-                        >
-                          View details
-                        </button>
+                    </div>
+
+                    {/* 座位信息 */}
+                    <div className="flex-1 mb-4 md:mb-0">
+                      <div className="text-sm text-gray-500 mb-1">Seat</div>
+                      <div className="text-lg font-bold">{booking.seat}</div>
+                    </div>
+
+                    {/* 旅客信息 */}
+                    <div className="flex-1">
+                      <div className="text-sm text-gray-500 mb-1">Passenger</div>
+                      <div className="text-lg font-bold">{booking.passenger}</div>
+                    </div>
+                  </div>
+
+                  {/* 底部详细信息和操作按钮 */}
+                  <div className="mt-6 pt-4 border-t border-gray-100 flex flex-wrap justify-between items-center">
+                    <div className="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-0">
+                      <div className="flex items-center mr-4 mb-2 sm:mb-0">
+                        <PlaneIcon />
+                        <span className="text-sm font-medium">{booking.flightNumber}</span>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {new Date(booking.date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </div>
+                      {booking.isRoundTrip && (
+                        <span className="ml-3 px-2 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded">Round trip</span>
+                      )}
+                      <span className={`ml-3 px-2 py-0.5 ${booking.status === 'Confirmed' ? 'bg-emerald-100 text-emerald-800' :
+                          booking.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                        } text-xs font-medium rounded`}>
+                        {booking.status}
+                      </span>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                        onClick={() => router.push(`/bookings/${booking.id}`)}
+                      >
+                        View details
+                      </button>
+                      {booking.status !== 'Cancelled' ? (
                         <button
                           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
                           onClick={() => router.push(`/checkin/${booking.id}`)}
                         >
                           Check-in
                         </button>
-                      </div>
+                      ) : (
+                        <button
+                          className="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed"
+                          disabled
+                        >
+                          Check-in Unavailable
+                        </button>
+                      )}
                     </div>
+                  </div>
 
-                    {/* Price breakdown */}
-                    <div className="mt-6 pt-4 border-t border-gray-100">
-                      <div className="text-xl font-bold text-blue-600">
-                        ${price.toFixed(2)}
-                        {booking.basePrice && booking.premiumPrice && (
-                          <div className="text-xs text-gray-500">
-                            Base: ${basePrice.toFixed(2)} + Premium: ${premiumPrice.toFixed(2)}
-                          </div>
-                        )}
-                      </div>
+                  {/* Price breakdown */}
+                  <div className="mt-6 pt-4 border-t border-gray-100">
+                    <div className="text-xl font-bold text-blue-600">
+                      ${typeof booking.price === 'number' 
+                        ? booking.price.toFixed(2) 
+                        : parseFloat(booking.price || 0).toFixed(2)}
+                      {booking.basePrice && booking.premiumPrice && (
+                        <div className="text-xs text-gray-500">
+                          Base: ${typeof booking.basePrice === 'number'
+                            ? booking.basePrice.toFixed(2)
+                            : parseFloat(booking.basePrice || 0).toFixed(2)} 
+                          + Premium: ${typeof booking.premiumPrice === 'number'
+                            ? booking.premiumPrice.toFixed(2)
+                            : parseFloat(booking.premiumPrice || 0).toFixed(2)}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
-              );
-            })
+              </div>
+            ))
           )}
         </div>
       </div>
