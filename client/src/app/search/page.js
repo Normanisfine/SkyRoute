@@ -415,6 +415,12 @@ const SearchResults = () => {
                             <div className="text-xl font-bold">{flight.departureTime}</div>
                             <div className="text-sm text-gray-500">{flight.origin}</div>
                             <div className="text-xs text-gray-400">{flight.originCity}</div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {new Date(flight.departureDateTime).toLocaleDateString('en-US', {
+                                month: 'short', 
+                                day: 'numeric'
+                              })}
+                            </div>
                           </div>
                           <div className="flex flex-col items-center mx-2 px-2">
                             <div className="text-xs text-gray-500">{flight.duration}</div>
