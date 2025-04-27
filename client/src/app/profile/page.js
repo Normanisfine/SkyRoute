@@ -250,7 +250,7 @@ const ProfilePage = () => {
 
     const handleRemoveSavedFlight = async (id) => {
         try {
-            const response = await fetch(`/api/flights/saved/${id}`, {
+            const response = await fetch(`/api/flights/saved?flightId=${id}`, {
                 method: 'DELETE',
             });
             
