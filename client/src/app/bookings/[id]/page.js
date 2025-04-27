@@ -42,6 +42,22 @@ const BookingDetailsPage = () => {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelError, setCancelError] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showLuggageModal, setShowLuggageModal] = useState(false);
+  const [luggageForm, setLuggageForm] = useState({
+    weight: '',
+    dimensions: ''
+  });
+  const [addingLuggage, setAddingLuggage] = useState(false);
+  const [luggageError, setLuggageError] = useState(null);
+  const [editLuggageModal, setEditLuggageModal] = useState(false);
+  const [selectedLuggage, setSelectedLuggage] = useState(null);
+  const [editLuggageForm, setEditLuggageForm] = useState({
+    weight: '',
+    dimensions: ''
+  });
+  const [editingLuggage, setEditingLuggage] = useState(false);
+  const [deletingLuggage, setDeletingLuggage] = useState(false);
+  const [editLuggageError, setEditLuggageError] = useState(null);
 
   useEffect(() => {
     const fetchBookingDetails = async () => {
@@ -100,6 +116,147 @@ const BookingDetailsPage = () => {
     } finally {
       setCancelLoading(false);
     }
+  };
+
+  const handleAddLuggage = async (e) => {
+    e.preventDefault();
+    
+    // Validate form
+    if (!luggageForm.weight || !luggageForm.dimensions) {
+      setLuggageError('Please fill in all luggage details');
+      return;
+    }
+    
+    try {
+      setAddingLuggage(true);
+      setLuggageError(null);
+      
+      const response = await fetch(`/api/bookings/${params.id}/luggage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          weight: parseFloat(luggageForm.weight),
+          dimensions: luggageForm.dimensions
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to add luggage');
+      }
+      
+      const result = await response.json();
+      
+      // Update the booking state with the new luggage item
+      setBooking(prev => ({
+        ...prev,
+        luggage: [...prev.luggage, result.luggage]
+      }));
+      
+      // Reset form and close modal
+      setLuggageForm({ weight: '', dimensions: '' });
+      setShowLuggageModal(false);
+      
+    } catch (error) {
+      console.error('Error adding luggage:', error);
+      setLuggageError(error.message);
+    } finally {
+      setAddingLuggage(false);
+    }
+  };
+
+  const handleEditLuggage = async (e) => {
+    e.preventDefault();
+    
+    // Validate form
+    if (!editLuggageForm.weight || !editLuggageForm.dimensions) {
+      setEditLuggageError('Please fill in all luggage details');
+      return;
+    }
+    
+    try {
+      setEditingLuggage(true);
+      setEditLuggageError(null);
+      
+      const response = await fetch(`/api/bookings/${params.id}/luggage/${selectedLuggage.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          weight: parseFloat(editLuggageForm.weight),
+          dimensions: editLuggageForm.dimensions
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update luggage');
+      }
+      
+      const result = await response.json();
+      
+      // Update the booking state with the updated luggage item
+      setBooking(prev => ({
+        ...prev,
+        luggage: prev.luggage.map(item => 
+          item.id === selectedLuggage.id ? result.luggage : item
+        )
+      }));
+      
+      // Reset form and close modal
+      setEditLuggageForm({ weight: '', dimensions: '' });
+      setEditLuggageModal(false);
+      setSelectedLuggage(null);
+      
+    } catch (error) {
+      console.error('Error updating luggage:', error);
+      setEditLuggageError(error.message);
+    } finally {
+      setEditingLuggage(false);
+    }
+  };
+
+  const handleDeleteLuggage = async (luggageId) => {
+    if (!confirm('Are you sure you want to delete this luggage?')) {
+      return;
+    }
+    
+    try {
+      setDeletingLuggage(true);
+      
+      const response = await fetch(`/api/bookings/${params.id}/luggage/${luggageId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete luggage');
+      }
+      
+      // Update the booking state by removing the deleted luggage
+      setBooking(prev => ({
+        ...prev,
+        luggage: prev.luggage.filter(item => item.id !== luggageId)
+      }));
+      
+    } catch (error) {
+      console.error('Error deleting luggage:', error);
+      alert('Failed to delete luggage: ' + error.message);
+    } finally {
+      setDeletingLuggage(false);
+    }
+  };
+
+  const openEditLuggageModal = (luggage) => {
+    setSelectedLuggage(luggage);
+    setEditLuggageForm({
+      weight: luggage.weight.toString(),
+      dimensions: luggage.dimensions
+    });
+    setEditLuggageModal(true);
   };
 
   if (loading) {
@@ -290,14 +447,39 @@ const BookingDetailsPage = () => {
               ) : (
                 <div className="space-y-4">
                   {booking.luggage.map(item => (
-                    <div key={item.id} className="flex items-start">
-                      <div className="p-3 bg-blue-50 text-blue-600 rounded-lg mr-4">
-                        <LuggageIcon />
+                    <div key={item.id} className="flex items-start justify-between">
+                      <div className="flex items-start">
+                        <div className="p-3 bg-blue-50 text-blue-600 rounded-lg mr-4">
+                          <LuggageIcon />
+                        </div>
+                        <div>
+                          <p className="font-medium">Luggage #{item.id}</p>
+                          <p className="text-sm text-gray-500">Weight: {item.weight} kg</p>
+                          <p className="text-sm text-gray-500">Dimensions: {item.dimensions}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">Luggage #{item.id}</p>
-                        <p className="text-sm text-gray-500">Weight: {item.weight} kg</p>
-                        <p className="text-sm text-gray-500">Dimensions: {item.dimensions}</p>
+                      <div className="flex space-x-2">
+                        <button 
+                          onClick={() => openEditLuggageModal(item)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-full"
+                          disabled={booking.status === 'Cancelled' || deletingLuggage}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 20h9"></path>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                          </svg>
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteLuggage(item.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-full"
+                          disabled={booking.status === 'Cancelled' || deletingLuggage}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18"></path>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                          </svg>
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -307,7 +489,8 @@ const BookingDetailsPage = () => {
               <div className="mt-4">
                 <button 
                   className="text-blue-600 font-medium hover:text-blue-800"
-                  onClick={() => alert('Luggage management functionality would go here')}
+                  onClick={() => setShowLuggageModal(true)}
+                  disabled={booking.status === 'Cancelled'}
                 >
                   + Add luggage
                 </button>
@@ -609,6 +792,150 @@ const BookingDetailsPage = () => {
                 {cancelLoading ? 'Processing...' : 'Confirm Cancellation'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Luggage Modal */}
+      {showLuggageModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full">
+            <h3 className="text-xl font-semibold mb-4">Add Luggage</h3>
+            
+            <form onSubmit={handleAddLuggage}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Weight (kg)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={luggageForm.weight}
+                  onChange={(e) => setLuggageForm({...luggageForm, weight: e.target.value})}
+                  placeholder="e.g., 23.5"
+                  required
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Dimensions (Length × Width × Height)
+                </label>
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={luggageForm.dimensions}
+                  onChange={(e) => setLuggageForm({...luggageForm, dimensions: e.target.value})}
+                  placeholder="e.g., 21×14×9"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Format: Length×Width×Height in inches or cm (e.g., 21×14×9)
+                </p>
+              </div>
+              
+              {luggageError && (
+                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg">
+                  {luggageError}
+                </div>
+              )}
+              
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  onClick={() => {
+                    setShowLuggageModal(false);
+                    setLuggageForm({ weight: '', dimensions: '' });
+                    setLuggageError(null);
+                  }}
+                  disabled={addingLuggage}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 ${addingLuggage ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={addingLuggage}
+                >
+                  {addingLuggage ? 'Adding...' : 'Add Luggage'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Luggage Modal */}
+      {editLuggageModal && selectedLuggage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full">
+            <h3 className="text-xl font-semibold mb-4">Edit Luggage</h3>
+            
+            <form onSubmit={handleEditLuggage}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Weight (kg)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={editLuggageForm.weight}
+                  onChange={(e) => setEditLuggageForm({...editLuggageForm, weight: e.target.value})}
+                  placeholder="e.g., 23.5"
+                  required
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Dimensions (Length × Width × Height)
+                </label>
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={editLuggageForm.dimensions}
+                  onChange={(e) => setEditLuggageForm({...editLuggageForm, dimensions: e.target.value})}
+                  placeholder="e.g., 21×14×9"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Format: Length×Width×Height in inches or cm (e.g., 21×14×9)
+                </p>
+              </div>
+              
+              {editLuggageError && (
+                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg">
+                  {editLuggageError}
+                </div>
+              )}
+              
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  onClick={() => {
+                    setEditLuggageModal(false);
+                    setSelectedLuggage(null);
+                    setEditLuggageError(null);
+                  }}
+                  disabled={editingLuggage}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 ${editingLuggage ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={editingLuggage}
+                >
+                  {editingLuggage ? 'Updating...' : 'Update Luggage'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
