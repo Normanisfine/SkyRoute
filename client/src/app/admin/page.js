@@ -279,19 +279,29 @@ const AdminPage = () => {
   const handleAirportSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/admin/airports', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(airportFormData),
-      });
+      if (editingItem && editingItem.airport_id) {
+        // EDIT mode: send PUT
+        const response = await fetch(`/api/admin/airports/${editingItem.airport_id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(airportFormData),
+        });
 
-      if (!response.ok) {
-        throw new Error('Failed to add airport');
+        if (!response.ok) throw new Error('Failed to update airport');
+        alert('Airport updated successfully!');
+        setEditingItem(null);
+      } else {
+        // ADD mode: send POST
+        const response = await fetch('/api/admin/airports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(airportFormData),
+        });
+
+        if (!response.ok) throw new Error('Failed to add airport');
+        alert('Airport added successfully!');
       }
 
-      alert('Airport added successfully!');
       setAirportFormData({
         airportName: '',
         city: '',
@@ -299,62 +309,106 @@ const AdminPage = () => {
         iataCode: '',
         icaoCode: '',
       });
+
+      // Refresh airports data
+      const airportsRes = await fetch('/api/admin/airports');
+      const airportsData = await airportsRes.json();
+      setAirports(Array.isArray(airportsData) ? airportsData : []);
+      setAirportView('manage');
     } catch (error) {
-      console.error('Error adding airport:', error);
-      alert('Failed to add airport');
+      console.error('Error saving airport:', error);
+      alert(error.message || 'Failed to save airport');
     }
   };
 
   const handleAirlineSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/admin/airlines', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(airlineFormData),
-      });
+      if (editingItem && editingItem.airline_id) {
+        // EDIT mode: send PUT
+        const response = await fetch(`/api/admin/airlines/${editingItem.airline_id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(airlineFormData),
+        });
 
-      if (!response.ok) {
-        throw new Error('Failed to add airline');
+        if (!response.ok) throw new Error('Failed to update airline');
+        alert('Airline updated successfully!');
+        setEditingItem(null);
+      } else {
+        // ADD mode: send POST
+        const response = await fetch('/api/admin/airlines', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(airlineFormData),
+        });
+
+        if (!response.ok) throw new Error('Failed to add airline');
+        alert('Airline added successfully!');
       }
 
-      alert('Airline added successfully!');
       setAirlineFormData({
         airlineName: '',
         country: '',
       });
+
+      // Refresh airlines data
+      const airlinesRes = await fetch('/api/admin/airlines');
+      const airlinesData = await airlinesRes.json();
+      setAirlines(Array.isArray(airlinesData) ? airlinesData : []);
+      setAirlineView('manage');
     } catch (error) {
-      console.error('Error adding airline:', error);
-      alert('Failed to add airline');
+      console.error('Error saving airline:', error);
+      alert(error.message || 'Failed to save airline');
     }
   };
 
   const handleSeatSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/admin/seats', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(seatFormData),
-      });
+      if (editingItem && editingItem.seat_id) {
+        // EDIT mode: send PUT
+        const response = await fetch(`/api/admin/seats/${editingItem.seat_id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(seatFormData),
+        });
 
-      if (!response.ok) {
-        throw new Error('Failed to add seat');
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to update seat');
+        }
+        alert('Seat updated successfully!');
+        setEditingItem(null);
+      } else {
+        // ADD mode: send POST
+        const response = await fetch('/api/admin/seats', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(seatFormData),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to add seat');
+        }
+        alert('Seat added successfully!');
       }
 
-      alert('Seat added successfully!');
       setSeatFormData({
         aircraftId: '',
         seatNumber: '',
         classType: 'Economy',
       });
+
+      // Refresh seats data
+      const seatsRes = await fetch('/api/admin/seats');
+      const seatsData = await seatsRes.json();
+      setSeats(Array.isArray(seatsData) ? seatsData : []);
+      setSeatView('manage');
     } catch (error) {
-      console.error('Error adding seat:', error);
-      alert('Failed to add seat');
+      console.error('Error saving seat:', error);
+      alert(error.message || 'Failed to save seat');
     }
   };
 
@@ -365,13 +419,11 @@ const AdminPage = () => {
     }
 
     try {
-      console.log('Fetching seats for flight:', flightId);
-      const response = await fetch(`/api/admin/seats/${flightId}`);
+      const response = await fetch(`/api/admin/seats/flight/${flightId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch seats');
       }
       const data = await response.json();
-      console.log('Available seats:', data);
       setAvailableSeats(data);
     } catch (error) {
       console.error('Error fetching seats:', error);
@@ -383,28 +435,50 @@ const AdminPage = () => {
   const handlePriceSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/admin/prices', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(priceFormData),
-      });
+      if (editingItem && editingItem.price_id) {
+        // EDIT mode: send PUT
+        const response = await fetch(`/api/admin/prices/${editingItem.price_id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(priceFormData),
+        });
 
-      if (!response.ok) {
-        throw new Error('Failed to add price');
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to update price');
+        }
+        alert('Price updated successfully!');
+        setEditingItem(null);
+      } else {
+        // ADD mode: send POST
+        const response = await fetch('/api/admin/prices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(priceFormData),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to add price');
+        }
+        alert('Price added successfully!');
       }
 
-      alert('Price added successfully!');
       setPriceFormData({
         flightId: '',
         seatId: '',
         premiumPrice: '',
         status: 'Available'
       });
+
+      // Refresh prices data
+      const pricesRes = await fetch('/api/admin/prices');
+      const pricesData = await pricesRes.json();
+      setPrices(Array.isArray(pricesData) ? pricesData : []);
+      setPriceView('manage');
     } catch (error) {
-      console.error('Error adding price:', error);
-      alert('Failed to add price');
+      console.error('Error saving price:', error);
+      alert(error.message || 'Failed to save price');
     }
   };
 
@@ -471,27 +545,12 @@ const AdminPage = () => {
           aircraftId: flightFormData.aircraftId,
           airlineId: flightFormData.airlineId,
           basicPrice: flightFormData.basicPrice,
+          status: flightFormData.status,
         }),
       });
 
       if (!flightResponse.ok) {
         throw new Error('Failed to update flight');
-      }
-
-      // Update flight status
-      const statusResponse = await fetch(`/api/admin/flight-status/${editingItem.flight_id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: flightFormData.status,
-          lastUpdated: new Date().toISOString()
-        }),
-      });
-
-      if (!statusResponse.ok) {
-        throw new Error('Failed to update flight status');
       }
 
       alert('Flight updated successfully!');
@@ -549,11 +608,15 @@ const AdminPage = () => {
         const response = await fetch(`/api/admin/airports/${airportId}`, {
           method: 'DELETE',
         });
-        if (!response.ok) throw new Error('Failed to delete airport');
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to delete airport');
+        }
         setAirports(airports.filter(a => a.airport_id !== airportId));
+        alert('Airport deleted successfully');
       } catch (error) {
         console.error('Error deleting airport:', error);
-        alert('Failed to delete airport');
+        alert(error.message || 'Failed to delete airport');
       }
     }
   };
@@ -600,11 +663,15 @@ const AdminPage = () => {
         const response = await fetch(`/api/admin/prices/${priceId}`, {
           method: 'DELETE',
         });
-        if (!response.ok) throw new Error('Failed to delete price');
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to delete price');
+        }
         setPrices(prices.filter(p => p.price_id !== priceId));
+        alert('Price deleted successfully');
       } catch (error) {
         console.error('Error deleting price:', error);
-        alert('Failed to delete price');
+        alert(error.message || 'Failed to delete price');
       }
     }
   };
@@ -707,6 +774,34 @@ const AdminPage = () => {
     } catch (error) {
       console.error('Error updating aircraft:', error);
       alert('Failed to update aircraft');
+    }
+  };
+
+  const handleEditAirline = (airline) => {
+    setEditingItem(airline);
+    setAirlineFormData({
+      airlineName: airline.airline_name,
+      country: airline.country,
+    });
+    setAirlineView('add');
+  };
+
+  const handleDeleteAirline = async (airlineId) => {
+    if (window.confirm('Are you sure you want to delete this airline?')) {
+      try {
+        const response = await fetch(`/api/admin/airlines/${airlineId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to delete airline');
+        }
+        setAirlines(airlines.filter(a => a.airline_id !== airlineId));
+        alert('Airline deleted successfully');
+      } catch (error) {
+        console.error('Error deleting airline:', error);
+        alert(error.message || 'Failed to delete airline');
+      }
     }
   };
 
@@ -1252,6 +1347,36 @@ const AdminPage = () => {
               }}>
                 Add Airport
               </button>
+
+              {editingItem && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingItem(null);
+                    setAirportFormData({
+                      airportName: '',
+                      city: '',
+                      country: '',
+                      iataCode: '',
+                      icaoCode: '',
+                    });
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    width: '100%',
+                    marginTop: '10px'
+                  }}
+                >
+                  Cancel Edit
+                </button>
+              )}
             </form>
           ) : (
             <div style={{
@@ -1347,7 +1472,9 @@ const AdminPage = () => {
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
-              <h2 style={{ marginBottom: '20px', color: '#333' }}>Add New Airline</h2>
+              <h2 style={{ marginBottom: '20px', color: '#333' }}>
+                {editingItem ? 'Edit Airline' : 'Add New Airline'}
+              </h2>
 
               <div style={{ marginBottom: '20px' }}>
                 <label style={labelStyle}>Airline Name:</label>
@@ -1382,8 +1509,35 @@ const AdminPage = () => {
                 fontWeight: 'bold',
                 width: '100%'
               }}>
-                Add Airline
+                {editingItem ? 'Update Airline' : 'Add Airline'}
               </button>
+
+              {editingItem && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingItem(null);
+                    setAirlineFormData({
+                      airlineName: '',
+                      country: '',
+                    });
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    width: '100%',
+                    marginTop: '10px'
+                  }}
+                >
+                  Cancel Edit
+                </button>
+              )}
             </form>
           ) : (
             <div style={{
@@ -1653,7 +1807,9 @@ const AdminPage = () => {
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
-              <h2 style={{ marginBottom: '20px', color: '#333' }}>Add New Seat</h2>
+              <h2 style={{ marginBottom: '20px', color: '#333' }}>
+                {editingItem ? 'Edit Seat' : 'Add New Seat'}
+              </h2>
 
               <div style={{ marginBottom: '20px' }}>
                 <label style={labelStyle}>Aircraft:</label>
@@ -1710,8 +1866,36 @@ const AdminPage = () => {
                 fontWeight: 'bold',
                 width: '100%'
               }}>
-                Add Seat
+                {editingItem ? 'Update Seat' : 'Add Seat'}
               </button>
+
+              {editingItem && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingItem(null);
+                    setSeatFormData({
+                      aircraftId: '',
+                      seatNumber: '',
+                      classType: 'Economy',
+                    });
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    width: '100%',
+                    marginTop: '10px'
+                  }}
+                >
+                  Cancel Edit
+                </button>
+              )}
             </form>
           ) : (
             <div style={{
@@ -1805,7 +1989,9 @@ const AdminPage = () => {
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
-              <h2 style={{ marginBottom: '20px', color: '#333' }}>Add New Price</h2>
+              <h2 style={{ marginBottom: '20px', color: '#333' }}>
+                {editingItem ? 'Edit Price' : 'Add New Price'}
+              </h2>
 
               <div style={{ marginBottom: '20px' }}>
                 <label style={labelStyle}>Flight:</label>
@@ -1836,23 +2022,38 @@ const AdminPage = () => {
                 </select>
               </div>
 
-              <div style={{ marginBottom: '20px' }}>
-                <label style={labelStyle}>Seat:</label>
-                <select
-                  value={priceFormData.seatId}
-                  onChange={(e) => setPriceFormData({ ...priceFormData, seatId: e.target.value })}
-                  required
-                  style={inputStyle}
-                  disabled={!priceFormData.flightId}
-                >
-                  <option value="">Select Seat</option>
-                  {availableSeats.map(seat => (
-                    <option key={seat.seat_id} value={seat.seat_id}>
-                      {seat.seat_number} - {seat.class_type}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {!editingItem ? (
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={labelStyle}>Seat:</label>
+                  <select
+                    value={priceFormData.seatId}
+                    onChange={(e) => setPriceFormData({ ...priceFormData, seatId: e.target.value })}
+                    required
+                    style={inputStyle}
+                    disabled={!priceFormData.flightId}
+                  >
+                    <option value="">Select Seat</option>
+                    {availableSeats.map(seat => (
+                      <option key={seat.seat_id} value={seat.seat_id}>
+                        {seat.seat_number} - {seat.class_type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={labelStyle}>Seat:</label>
+                  <input
+                    type="text"
+                    value={
+                      seats.find(s => s.seat_id === priceFormData.seatId)?.seat_number ||
+                      priceFormData.seatId
+                    }
+                    disabled
+                    style={inputStyle}
+                  />
+                </div>
+              )}
 
               <div style={{ marginBottom: '20px' }}>
                 <label style={labelStyle}>Premium Price:</label>
@@ -1891,8 +2092,37 @@ const AdminPage = () => {
                 fontWeight: 'bold',
                 width: '100%'
               }}>
-                Add Price
+                {editingItem ? 'Update Price' : 'Add Price'}
               </button>
+
+              {editingItem && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingItem(null);
+                    setPriceFormData({
+                      flightId: '',
+                      seatId: '',
+                      premiumPrice: '',
+                      status: 'Available'
+                    });
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    width: '100%',
+                    marginTop: '10px'
+                  }}
+                >
+                  Cancel Edit
+                </button>
+              )}
             </form>
           ) : (
             <div style={{
