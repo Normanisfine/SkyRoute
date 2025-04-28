@@ -435,28 +435,50 @@ const AdminPage = () => {
   const handlePriceSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/admin/prices', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(priceFormData),
-      });
+      if (editingItem && editingItem.price_id) {
+        // EDIT mode: send PUT
+        const response = await fetch(`/api/admin/prices/${editingItem.price_id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(priceFormData),
+        });
 
-      if (!response.ok) {
-        throw new Error('Failed to add price');
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to update price');
+        }
+        alert('Price updated successfully!');
+        setEditingItem(null);
+      } else {
+        // ADD mode: send POST
+        const response = await fetch('/api/admin/prices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(priceFormData),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to add price');
+        }
+        alert('Price added successfully!');
       }
 
-      alert('Price added successfully!');
       setPriceFormData({
         flightId: '',
         seatId: '',
         premiumPrice: '',
         status: 'Available'
       });
+
+      // Refresh prices data
+      const pricesRes = await fetch('/api/admin/prices');
+      const pricesData = await pricesRes.json();
+      setPrices(Array.isArray(pricesData) ? pricesData : []);
+      setPriceView('manage');
     } catch (error) {
-      console.error('Error adding price:', error);
-      alert('Failed to add price');
+      console.error('Error saving price:', error);
+      alert(error.message || 'Failed to save price');
     }
   };
 
@@ -641,11 +663,15 @@ const AdminPage = () => {
         const response = await fetch(`/api/admin/prices/${priceId}`, {
           method: 'DELETE',
         });
-        if (!response.ok) throw new Error('Failed to delete price');
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to delete price');
+        }
         setPrices(prices.filter(p => p.price_id !== priceId));
+        alert('Price deleted successfully');
       } catch (error) {
         console.error('Error deleting price:', error);
-        alert('Failed to delete price');
+        alert(error.message || 'Failed to delete price');
       }
     }
   };
@@ -1963,7 +1989,9 @@ const AdminPage = () => {
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
-              <h2 style={{ marginBottom: '20px', color: '#333' }}>Add New Price</h2>
+              <h2 style={{ marginBottom: '20px', color: '#333' }}>
+                {editingItem ? 'Edit Price' : 'Add New Price'}
+              </h2>
 
               <div style={{ marginBottom: '20px' }}>
                 <label style={labelStyle}>Flight:</label>
@@ -1994,23 +2022,38 @@ const AdminPage = () => {
                 </select>
               </div>
 
-              <div style={{ marginBottom: '20px' }}>
-                <label style={labelStyle}>Seat:</label>
-                <select
-                  value={priceFormData.seatId}
-                  onChange={(e) => setPriceFormData({ ...priceFormData, seatId: e.target.value })}
-                  required
-                  style={inputStyle}
-                  disabled={!priceFormData.flightId}
-                >
-                  <option value="">Select Seat</option>
-                  {availableSeats.map(seat => (
-                    <option key={seat.seat_id} value={seat.seat_id}>
-                      {seat.seat_number} - {seat.class_type}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {!editingItem ? (
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={labelStyle}>Seat:</label>
+                  <select
+                    value={priceFormData.seatId}
+                    onChange={(e) => setPriceFormData({ ...priceFormData, seatId: e.target.value })}
+                    required
+                    style={inputStyle}
+                    disabled={!priceFormData.flightId}
+                  >
+                    <option value="">Select Seat</option>
+                    {availableSeats.map(seat => (
+                      <option key={seat.seat_id} value={seat.seat_id}>
+                        {seat.seat_number} - {seat.class_type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={labelStyle}>Seat:</label>
+                  <input
+                    type="text"
+                    value={
+                      seats.find(s => s.seat_id === priceFormData.seatId)?.seat_number ||
+                      priceFormData.seatId
+                    }
+                    disabled
+                    style={inputStyle}
+                  />
+                </div>
+              )}
 
               <div style={{ marginBottom: '20px' }}>
                 <label style={labelStyle}>Premium Price:</label>
@@ -2049,8 +2092,37 @@ const AdminPage = () => {
                 fontWeight: 'bold',
                 width: '100%'
               }}>
-                Add Price
+                {editingItem ? 'Update Price' : 'Add Price'}
               </button>
+
+              {editingItem && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingItem(null);
+                    setPriceFormData({
+                      flightId: '',
+                      seatId: '',
+                      premiumPrice: '',
+                      status: 'Available'
+                    });
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    width: '100%',
+                    marginTop: '10px'
+                  }}
+                >
+                  Cancel Edit
+                </button>
+              )}
             </form>
           ) : (
             <div style={{
